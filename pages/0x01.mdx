@@ -1,0 +1,95 @@
+import { Layout, Title, Footer } from '@libs/components'
+import { Spacer, Text, Link, Note } from '@geist-ui/react'
+
+**Secret** is an online service that helps users to protect themselves from third-party information monitoring on the Internet by means of _client-side encryption_.
+
+With Secret, you can easily send passwords, texts or any private information to others,
+The content will only be transmitted over the network in cipher text,
+also you can easily track when information is read, **somewhat similar to read and burn, but safer**.
+
+<Spacer y={3} />
+<Text h2 size={12}>
+  Structure
+</Text>
+
+If my key is also transmitted over the network, then doesn't the ciphertext transmission have no meaning?
+Indeed. However, the Secret service does **not store the keys** you generate at any step, more than that,
+the key will not be transmitted over the network.
+
+All generated keys will be left for you to distribute, this means that all transmitted text content is encrypted ciphertext,
+No third-party hijacking and monitoring service can recognize the content of your messages.
+
+```
+owner -> client --> serialize + encrypt --> server
+```
+
+After the user initiates a secret request, Secret will work as follows:
+
+1. Information will be encrypted after standard serialization, the cipher text will be sent directly to the server for storage.
+2. Client generates decoding key, server-side generation of consumable reading keys.
+3. Serialize multiple keys with mixed encryption to generate a consumable URL address.
+
+Any consumable URL address is unique, single-use, time-limited, etc., it is up to the user to decide who to send these consumer links to,
+Anyone with a consumer link can immediately access, Secret will then proceed as follows:
+
+1. Analysis of multiple keys for consumer links, local verification.
+2. Request a ciphertext by reading key.
+3. Local decoding of cipher text, disabling consumer links.
+
+<Spacer y={3} />
+<Text h2 size={12}>
+  Covenant and Consideration
+</Text>
+
+Secret was originally designed to improve the security of text messages transmitted over the network,
+any future upgrades and optimizations will be based on the following conventions:
+
+- Store: only transmits the ciphertext on the network, only stores ciphertext.
+- Privacy：**does not collect any user privacy**, such as environment, location, etc.
+- Expire：cipher and key will always expire automatically (whether set or not)
+- Product：will not be used as any file sharing tool.
+
+<Note type="warning">
+
+Sharing rich text, multimedia, applications, files, etc. may lead to tools being used
+accidentally for phishing, attacks, illegal sharing, etc., Secret does not recognize and
+analyze user content, to ensure a reasonable and friendly application, Secret will
+always **only be used to share text**.
+
+</Note>
+
+<Spacer y={3} />
+<Text h2 size={12}>
+  Security
+</Text>
+
+Secret maximizes network security and reduces the possibility of third-party hijacking and sniffing attacks on users,
+it can also prevent users from leaking information due to monitoring by the network operators.
+Security is relative, it is important to note that there is still a very low risk of exposure of your information to:
+
+- The clipboard or browser is hijacked when you are using a web application.
+- Screen recording by third parties, input method hijacking, etc.
+- Social engineering risks, etc.
+
+None of the above risks are considered in the design of this application.
+
+<Spacer y={3} />
+<Text h2 size={12}>
+  Submit
+</Text>
+
+If you believe that part of the design may have potential vulnerabilities or could be optimized,
+please create an <Link color target="_blank" href="https://github.com/unix/secret/issues/new">Issue</Link>.
+
+If you confirm that you have found an existing security issue,
+please contact me by <Link color target="_blank" href="mailto:unix.bio@gmail.com">Email</Link>.
+
+<Spacer y={5} />
+
+export default ({ children }) => (
+  <Layout>
+    <Title title="What is secret" />
+    {children}
+    <Footer />
+  </Layout>
+)

@@ -1,0 +1,9 @@
+.github
+.next
+.now
+.circleci
+dist
+coverage
+public
+*.d.ts
+*.snap

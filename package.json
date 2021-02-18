@@ -1,0 +1,39 @@
+{
+  "name": "secret",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:unix/secret.git",
+  "author": "unix <unix.bio@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "prettier": "@geist-ui/prettier-config",
+  "dependencies": {
+    "@geist-ui/react": "^2.1.3",
+    "@geist-ui/react-icons": "^1.0.1",
+    "axios": "^0.21.1",
+    "crypto-js": "^4.0.0",
+    "nanoid": "^3.1.20",
+    "next": "^10.0.6",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
+  },
+  "devDependencies": {
+    "@geist-ui/prettier-config": "^1.0.1",
+    "@mdx-js/loader": "^1.6.22",
+    "@next/mdx": "^10.0.7",
+    "@types/crypto-js": "^4.0.1",
+    "@types/node": "^14.14.27",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.1",
+    "eslint": "^7.20.0",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-config-ts-lambdas": "^1.2.3",
+    "eslint-plugin-react": "^7.22.0",
+    "prettier": "^2.2.1",
+    "rehype-join-line": "^1.0.2",
+    "styled-jsx": "^3.4.2",
+    "typescript": "^4.2.2"
+  }
+}

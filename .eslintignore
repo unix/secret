@@ -1,0 +1,7 @@
+.now/*
+.next/*
+dist/*
+public/*
+scripts/*
+tests/*
+*.config.js

@@ -1,0 +1,7 @@
+.idea
+.git
+.DS_Store
+.env
+dist
+coverage
+.circleci
