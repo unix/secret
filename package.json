@@ -6,7 +6,9 @@
   "author": "unix <unix.bio@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev"
+    "dev": "next dev",
+    "build": "next build",
+    "prettier": "prettier --write ."
   },
   "prettier": "@geist-ui/prettier-config",
   "dependencies": {
