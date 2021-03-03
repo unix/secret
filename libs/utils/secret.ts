@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import sha256 from 'crypto-js/sha256'
 import Base64 from 'crypto-js/enc-base64'
 import aes from 'crypto-js/aes'
+import enc from 'crypto-js/enc-base64'
 import utf8 from 'crypto-js/enc-utf8'
 import storage from './storage'
 import {
@@ -142,19 +143,29 @@ export type SecretURLParams = {
 
 export type SecretURLRecord = Record<string, undefined> | SecretURLParams
 
-export const encodeURL = ({ nonce, key, readId }: SecretURLRecord): string => {
+const encodePath = ({ nonce, key, readId }: SecretURLRecord): string => {
   const path = `${nonce}${URL_SPLIT}${key}${URL_SPLIT}${readId}`
-  const safePath = aes.encrypt(path, URL_SPLIT).toString()
+  const iv = enc.parse(DEFAULT_ORIGIN.repeat(3))
+  const urlKey = enc.parse(URL_SPLIT.repeat(3))
+  const safePath = aes.encrypt(path, urlKey, { iv }).toString()
+  return encodeURI(safePath).replace(/\//g, '_')
+}
+
+export const encodeURL = ({ nonce, key, readId }: SecretURLRecord): string => {
+  const path = encodePath({ nonce, key, readId })
   const origin =
     isBrowser() && isSafeOrigin(window.location.origin)
       ? window.location.origin
       : DEFAULT_ORIGIN
-  return `${origin}/s/${encodeURI(safePath)}`
+  return `${origin}/s/${path}`
 }
 
 export const decodeURL = (input: string): SecretURLRecord | null => {
-  const path = decodeURI(input)
-  const str = aes.decrypt(path, URL_SPLIT).toString(utf8)
+  const url = input.replace(/_/g, '/')
+  const path = decodeURI(url)
+  const iv = enc.parse(DEFAULT_ORIGIN.repeat(3))
+  const urlKey = enc.parse(URL_SPLIT.repeat(3))
+  const str = aes.decrypt(path, urlKey, { iv }).toString(utf8)
   if (!str || !str.includes(URL_SPLIT)) return null
   const [nonce, key, readId] = str.split(URL_SPLIT)
   return {
@@ -164,10 +175,8 @@ export const decodeURL = (input: string): SecretURLRecord | null => {
   }
 }
 
-export const encodeCLI = ({ nonce, key, readId }: SecretURLRecord): string => {
-  const path = `${nonce}${URL_SPLIT}${key}${URL_SPLIT}${readId}`
-  const safePath = aes.encrypt(path, URL_SPLIT).toString()
-  return `npx secret ${encodeURI(safePath)}`
+export const encodeCLI = (input: SecretURLRecord): string => {
+  return `npx secret ${encodeURI(encodePath(input))}`
 }
 
 export type TrackedReaderGroup = {

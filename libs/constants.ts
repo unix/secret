@@ -13,7 +13,7 @@ export const BASE_APIS = {
 
 export const CACHE_SPLIT = '$_CACHE_$'
 
-export const URL_SPLIT = '_@_'
+export const URL_SPLIT = '**'
 
 export const DEFAULT_ORIGIN = 'https://secret.gl'
 
