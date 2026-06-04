@@ -1,0 +1,413 @@
+---
+import SecretFooter from '@/components/astro/secret-footer.astro'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import SecretPageHero from '@/components/astro/secret-page-hero.astro'
+import PostContent from '@/components/astro/post-content.astro'
+import HeadLayout from '@/layouts/head.layout.astro'
+---
+
+<HeadLayout title="Secret - Features">
+  <main class="flex min-h-svh flex-col bg-white text-black">
+    <SecretHeader />
+    <SecretPageHero
+      title="What is Secret"
+      description="Client-side encryption for sharing private text and files without sending the decryption key to the server."
+    />
+
+    <PostContent>
+      <div>
+        <p>
+          Secret is a <strong>zero-knowledge sharing tool</strong> for short-lived private
+          data. The browser encrypts the content before it touches the network, and the
+          server only coordinates ciphertext, storage, expiration, and one-time read tokens.
+          The decryption secret stays in the
+          <a
+            href="https://datatracker.ietf.org/doc/html/rfc3986"
+            target="_blank"
+            rel="noreferrer">URL fragment</a
+          >, which browsers do not send in
+          <code>HTTP</code> requests.
+        </p>
+        <blockquote>
+          The result is a link that can be shared like an ordinary URL, while the
+          actual plaintext remains recoverable only by someone who has both parts:
+          the server-side <code>readId</code> in the path and the client-side
+          <code>accessSecret</code> in the hash.
+        </blockquote>
+        <p>
+          Secret also issues a separate tracking link so the sender can see whether a
+          read link is still available, consumed, expired, or destroyed.
+        </p>
+
+        <section>
+          <h2>System architecture</h2>
+          <div
+            role="alert"
+            class="mb-2 mt-4 rounded-md bg-amber-50 px-3 py-2.5 text-sm leading-6 text-amber-900">
+            If you need the concise security model or want to begin an audit, refer
+            to
+            <a
+              href="https://github.com/unix/secret/blob/main/SECURITY_MODEL.md"
+              target="_blank"
+              rel="noreferrer">SECURITY_MODEL.md</a
+            >.
+          </div>
+          <p>
+            Secret is split into three layers. The portal is a browser client that
+            owns the user experience and calls the <code>cipher</code> package locally.
+            The <code>cipher</code> package contains the portable cryptography primitives
+            for text and files. It is built on the standard
+            <a
+              href="https://www.w3.org/TR/WebCryptoAPI/"
+              target="_blank"
+              rel="noreferrer">Web Cryptography API</a
+            >
+            surface instead of implementing its own cipher primitives. The
+            <code>edge</code> package is a <em>Cloudflare Worker</em>
+            API backed by <em>D1</em> for metadata and read tokens, plus
+            <em>R2</em> for encrypted file objects.
+          </p>
+          <pre><code>browser client
+  -> cipher package (Web Crypto, HKDF-SHA256, AES-GCM)
+  -> edge Worker API
+      -> D1: metadata, read ids, tracking state
+      -> R2: encrypted file bytes</code></pre>
+          <p>
+            <strong>The API never performs decryption.</strong> It validates limits, creates
+            random ids, stores encrypted payloads, consumes read links, and deletes expired
+            content. This boundary is intentional: a database dump, object-store leak,
+            proxy log, or server-side bug should not reveal plaintext because
+            <strong>the required secret is not stored there</strong>.
+          </p>
+        </section>
+
+        <section>
+          <h2>Text secret flow</h2>
+          <p>
+            For text, the browser generates a <code>32-byte</code> access secret and encrypts
+            the <code>UTF-8</code> payload locally. Random values come from
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues"
+              target="_blank"
+              rel="noreferrer">Crypto.getRandomValues</a
+            >: a <code>16-byte</code> salt and <code>12-byte</code> IV are generated for
+            the payload, and <code>HKDF-SHA256</code> derives a
+            <code>32-byte</code> AES key from the access secret.
+            <a
+              href="https://csrc.nist.gov/pubs/sp/800/38/d/final"
+              target="_blank"
+              rel="noreferrer">AES-GCM</a
+            >
+            encrypts and authenticates the message with a text-specific additional authenticated
+            data context.
+          </p>
+          <pre><code>secret = random(32 bytes)
+salt   = random(16 bytes)
+iv     = random(12 bytes)
+key    = HKDF-SHA256(secret, salt, "secret-cipher:text-key")
+cipher = AES-GCM.encrypt(key, iv, plaintext, "secret-cipher:text")</code></pre>
+          <p>
+            The ciphertext is serialized as a compact <code>Base64URL</code>
+            payload in the format <code>salt.iv.ciphertext</code>. Only that
+            serialized ciphertext and its size are posted to the Worker. The Worker
+            stores it in <em>D1</em>, creates one or more random
+            <code>readId</code> values, creates one random <code>trackId</code>, and
+            returns those ids to the portal.
+          </p>
+          <pre><code>POST /secrets/text
+&#123;
+  "cipher": "salt.iv.ciphertext",
+  "plainSize": 1234,
+  "reads": 1,
+  "expiresInSeconds": 3600
+&#125;</code></pre>
+        </section>
+
+        <section>
+          <h2>File secret flow</h2>
+          <p>
+            Files use the same zero-knowledge model, but the data is split into an
+            encrypted manifest and encrypted chunks. The manifest contains file
+            metadata such as <code>name</code>, <code>type</code>,
+            <code>size</code>, <code>chunkSize</code>, and
+            <code>chunkCount</code>. It is encrypted separately from the file bytes,
+            so even file metadata is not stored in plaintext by the API.
+          </p>
+          <p>
+            Chunks default to <code>8 MiB</code>. The file key and manifest key are
+            derived from the same access secret with different
+            <a
+              href="https://datatracker.ietf.org/doc/html/rfc5869"
+              target="_blank"
+              rel="noreferrer">HKDF</a
+            >
+            contexts. Each chunk uses a deterministic nonce derived from a secret nonce
+            base and the <code>chunkIndex</code>, keeping chunk nonces separate to
+            avoid the
+            <a
+              href="https://www.rfc-editor.org/rfc/rfc5116#section-5.1.1"
+              target="_blank"
+              rel="noreferrer">nonce reuse</a
+            >
+            failure mode in AEAD schemes. <code>AES-GCM</code> authenticates the chunk
+            index, total chunk count, chunk size, and plaintext length as additional data.
+          </p>
+          <pre><code>manifestKey = HKDF-SHA256(secret, salt, "secret-cipher:file-manifest-key")
+fileKey     = HKDF-SHA256(secret, salt, "secret-cipher:file-key")
+nonceBase   = HKDF-SHA256(secret, salt, "secret-cipher:file-chunk-nonce")
+chunkNonce  = nonceBase XOR chunkIndex</code></pre>
+          <ul>
+            <li>The browser encrypts the manifest and file chunks before upload.</li>
+            <li>
+              The Worker creates a pending upload session and returns a presigned
+              <em>R2</em> upload URL.
+            </li>
+            <li>
+              The browser uploads encrypted bytes directly to <em>R2</em> and then completes
+              the session with the <code>uploadToken</code>.
+            </li>
+            <li>
+              Completion creates <code>readId</code> values and a
+              <code>trackId</code>, then marks the secret as <code>ready</code>.
+            </li>
+          </ul>
+          <pre><code>init file -> encrypted manifest stored in D1
+upload    -> encrypted chunks stored in R2
+complete  -> read ids + track id become active</code></pre>
+        </section>
+
+        <section>
+          <h2>Access URL architecture</h2>
+          <p>
+            A readable Secret URL has two different security domains in one string.
+            The path contains the <code>readId</code>, which the server needs in
+            order to locate and consume the encrypted record. The hash fragment
+            contains the <code>accessSecret</code>, which
+            <strong>the server must not receive</strong>. This is the central reason
+            Secret uses the fragment boundary defined by
+            <a
+              href="https://datatracker.ietf.org/doc/html/rfc3986"
+              target="_blank"
+              rel="noreferrer">URI syntax</a
+            >
+            instead of query parameters.
+          </p>
+          <pre><code>https://secret.example/s/&#123;readId&#125;#&#123;accessSecret&#125;
+                        ^^^^^^^^ ^^^^^^^^^^^^^^
+                        server   browser-only fragment</code></pre>
+          <p>
+            When a recipient opens the link, the portal reads the fragment locally,
+            asks the Worker for the encrypted secret by <code>readId</code>, then
+            decrypts in the browser. For text secrets, the <code>readId</code> is consumed
+            before ciphertext is returned. For file secrets, the metadata request reveals
+            only encrypted manifest data, and the <code>readId</code> is consumed when
+            the encrypted object is downloaded.
+          </p>
+        </section>
+
+        <section>
+          <h2>Read, burn, and tracking</h2>
+          <p>
+            Read links are independent consumable tokens stored in <em>D1</em>. Each <code
+              >readId</code
+            > can be used once. The Worker checks the row, rejects already consumed links,
+            rejects expired records, atomically marks the <code>readId</code> as consumed,
+            and then returns the encrypted payload. When no reads remain,
+            <strong>the secret content is destroyed</strong> while short-lived tracking
+            metadata is kept.
+          </p>
+          <pre><code>readId -> find secret
+       -> reject consumed / expired / not ready
+       -> consume readId
+       -> return ciphertext or encrypted file stream
+       -> destroy content when remainingReads == 0</code></pre>
+          <p>
+            Tracking uses a separate <code>trackId</code>. It reports
+            <code>kind</code>, lifecycle <code>status</code>, created time, completed
+            time, expiration time, destroyed time, read limit, remaining reads, and
+            per-read consumption timestamps. It does not include plaintext,
+            ciphertext, access secrets, upload tokens, or file objects.
+          </p>
+        </section>
+
+        <section>
+          <h2>Lifecycle limits</h2>
+          <p>
+            Secret is deliberately short-lived. Text payloads are limited to
+            <code>50 KB</code> of plaintext and <code>70 KB</code> of serialized ciphertext.
+            A secret can create up to <code>10</code> read links and can live for at most
+            <code>1 hour</code>. Pending file uploads are removed after <code
+              >15 minutes</code
+            > if they are not completed. Destroyed tracking records are retained for up
+            to <code>24 hours</code>
+            and then deleted.
+          </p>
+          <pre><code>max text plaintext: 50 KB
+max text ciphertext: 70 KB
+max reads: 10
+max expiration: 1 hour
+pending upload ttl: 15 minutes
+tracking ttl after destroy/expire: 24 hours</code></pre>
+          <p>
+            A scheduled cleanup job destroys ready records after expiration, deletes
+            stale pending uploads, removes <em>R2</em> objects when needed, and finally
+            removes tracking-expired records from <em>D1</em>.
+          </p>
+        </section>
+
+        <section>
+          <h2>Security model</h2>
+          <p>
+            Secret protects against the server, database, object store, network
+            intermediaries, and accidental logs learning the plaintext, assuming the
+            browser runtime and recipient device are trustworthy. The important
+            properties are:
+          </p>
+          <ul>
+            <li>
+              Plaintext is encrypted before upload and decrypted only after download
+              in the browser.
+            </li>
+            <li>
+              The access secret is a <code>32-byte</code> random value encoded into the
+              <code>URL fragment</code>, not into API requests.
+            </li>
+            <li>
+              <code>HKDF</code> contexts separate text keys, file keys, manifest keys,
+              and chunk nonce derivation.
+            </li>
+            <li>
+              <code>AES-GCM</code> authenticates ciphertext, metadata context, and chunk
+              placement through associated data, matching the browser
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/AesGcmParams"
+                target="_blank"
+                rel="noreferrer">AesGcmParams</a
+              >
+              model.
+            </li>
+            <li>
+              <code>readId</code>, <code>trackId</code>, <code>secretId</code>, and
+              <code>uploadToken</code> values are random and independent.
+            </li>
+            <li>
+              Server-side expiration and consumption rules reduce the time window in
+              which encrypted material exists.
+            </li>
+          </ul>
+          <p>
+            The model does not protect against a compromised browser, malicious
+            extensions, clipboard theft, screen recording, phishing, a recipient who
+            copies the plaintext after opening it, or a shared link being forwarded
+            before it is consumed. Secret reduces server-side and network exposure; <strong
+              >it does not make an untrusted endpoint trustworthy</strong
+            >.
+          </p>
+          <p>
+            Imported working keys are created as non-extractable
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable"
+              target="_blank"
+              rel="noreferrer">CryptoKey</a
+            >
+            values, so Web Crypto can use them for <code>deriveBits</code>,
+            <code>encrypt</code>, or <code>decrypt</code> without exposing key bytes through
+            the API. AES-GCM encryption and decryption also use a
+            <code>128-bit</code> authentication tag.
+          </p>
+          <p>
+            This boundary follows the same practical warning in the
+            <a
+              href="https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+              target="_blank"
+              rel="noreferrer">OWASP Secrets Management Cheat Sheet</a
+            >: client-side encryption can keep data encrypted until active
+            decryption, but it cannot rescue a compromised endpoint. HTTPS remains
+            required for transport, but the
+            <a
+              href="https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+              target="_blank"
+              rel="noreferrer">TLS layer</a
+            >
+            is not treated as a substitute for client-side encryption.
+          </p>
+          <p>
+            The storage rule is intentionally conservative: store ciphertext, keep
+            access secrets out of server persistence, and delete material when the
+            read or expiration lifecycle allows it. This is aligned with OWASP's
+            <a
+              href="https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+              target="_blank"
+              rel="noreferrer">cryptographic storage guidance</a
+            >. Malformed ciphertext, malformed fragments, and invalid encoded bytes
+            are rejected before decryption, following the same fail-closed posture
+            expected by
+            <a
+              href="https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html"
+              target="_blank"
+              rel="noreferrer">input validation guidance</a
+            >.
+          </p>
+        </section>
+
+        <section>
+          <h2>Further reading</h2>
+          <p>
+            These references are useful for reviewing the risk categories behind
+            Secret's storage and transmission boundaries:
+          </p>
+          <ol>
+            <li>
+              <a
+                href="https://cwe.mitre.org/data/definitions/312.html"
+                target="_blank"
+                rel="noreferrer"
+                >CWE-312: Cleartext Storage of Sensitive Information</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://cwe.mitre.org/data/definitions/319.html"
+                target="_blank"
+                rel="noreferrer"
+                >CWE-319: Cleartext Transmission of Sensitive Information</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://cwe.mitre.org/data/definitions/359.html"
+                target="_blank"
+                rel="noreferrer">CWE-359: Exposure of Private Personal Information</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final"
+                target="_blank"
+                rel="noreferrer"
+                >NIST SP 800-57 Part 1: Recommendation for Key Management</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://csrc.nist.gov/pubs/sp/800/90/a/r1/final"
+                target="_blank"
+                rel="noreferrer"
+                >NIST SP 800-90A Rev. 1: Recommendation for Random Number Generation</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://encoding.spec.whatwg.org/"
+                target="_blank"
+                rel="noreferrer">WHATWG Encoding Standard</a
+              >
+            </li>
+          </ol>
+        </section>
+      </div>
+    </PostContent>
+
+    <SecretFooter />
+  </main>
+</HeadLayout>

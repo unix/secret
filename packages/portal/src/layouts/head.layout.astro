@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title = 'Secret - sharing and safer sharing',
-  description = 'Secret will protect you when sharing information, you can use it to send text without worrying about hijacked.',
+  description = 'Share secrets that stay secret. Send encrypted text and files without giving the server the key.',
 } = Astro.props
 ---
 
@@ -16,11 +16,30 @@ const {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+
+    <!-- Primary Tags -->
+    <meta name="title" content="Secret - sharing and safer sharing">
+    <meta name="description" content="Client-side encrypted sharing for short-lived secrets.">
+
+    <!-- Twitter -->
+    <meta property="twitter:title" content="Secret - sharing and safer sharing">
+    <meta property="twitter:description" content="Client-side encrypted sharing for short-lived secrets.">
+    <meta property="twitter:image" content="https://secret.witt.im/og.png">
+    <meta property="twitter:url" content="https://secret.witt.im">
+    <meta property="twitter:card" content="summary_large_image">
+
+    <!-- Facebook -->
+    <meta property="og:title" content="Secret - sharing and safer sharing">
+    <meta property="og:description" content="Client-side encrypted sharing for short-lived secrets.">
+    <meta property="og:url" content="https://secret.witt.im">
+    <meta property="og:image" content="https://secret.witt.im/og.png">
+    <meta property="og:type" content="website">
+    
     <slot name="head" />
   </head>
   <body>

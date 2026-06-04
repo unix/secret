@@ -1,5 +1,4 @@
 import axios, { type AxiosResponse } from 'axios'
-
 import selfHost from '../../self-host'
 
 type ApiErrorBody = {
@@ -38,7 +37,11 @@ const configuredApiOrigin = (): string => {
   return value
 }
 
-export const API_BASE = isLocalHost() ? LOCAL_API_BASE : configuredApiOrigin()
+const configuredApiBase = (): string => {
+  return `${configuredApiOrigin()}/api`
+}
+
+export const API_BASE = isLocalHost() ? LOCAL_API_BASE : configuredApiBase()
 
 export const apiClient = axios.create({
   adapter: 'xhr',

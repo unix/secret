@@ -8,7 +8,17 @@ import react from '@astrojs/react'
 
 // https://astro.build/config
 export default defineConfig({
+  prefetch: {
+    defaultStrategy: 'viewport',
+  },
+
   adapter: cloudflare({}),
+
+  session: {
+    driver: {
+      entrypoint: 'unstorage/drivers/null',
+    },
+  },
 
   vite: {
     plugins: [/** @type {any} */ (tailwindcss())],

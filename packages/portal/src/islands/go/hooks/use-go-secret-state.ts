@@ -1,5 +1,4 @@
 import { useMemo, useReducer } from 'react'
-
 import { DEFAULT_EXPIRATION_SECONDS, DEFAULT_LINK_COUNT } from '@/islands/go/limits'
 import type { SecretMode, SecretSettings } from '@/islands/go/types'
 

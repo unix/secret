@@ -6,12 +6,11 @@ import {
   Shield02Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-
 import { trackSecret, type TrackSecretResponse } from '@/apis/secrets'
 import { Button } from '@/components/ui/button'
 import { Loading } from '@/components/ui/loading'
 import { cn } from '@/lib/utils'
-
+import AppContent from '@/components/app-content'
 import { loadTrackLinks, type StoredTrackLink } from './track-links'
 
 type TrackSecretIslandProps = {
@@ -32,7 +31,7 @@ const statusLabel = (status: TrackSecretResponse['status']): string => {
   return 'Pending'
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+const Metric = ({ label, value }: { label: string; value: string }) => {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-xs">
       <p className="text-xs leading-5 font-medium text-zinc-500">{label}</p>
@@ -43,7 +42,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ReadLinksPlaceholder() {
+const ReadLinksPlaceholder = () => {
   return (
     <div className="rounded-md border border-dashed border-zinc-200 bg-white px-4 py-5 shadow-xs">
       <p className="text-sm leading-6 font-medium text-zinc-800">
@@ -58,7 +57,7 @@ function ReadLinksPlaceholder() {
   )
 }
 
-function ReadLinksSessionAlert() {
+const ReadLinksSessionAlert = () => {
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
       <p className="text-xs leading-5 font-medium">Session-only read URLs</p>
@@ -70,13 +69,13 @@ function ReadLinksSessionAlert() {
   )
 }
 
-function ReadRow({
+const ReadRow = ({
   consumedAt,
   value,
 }: {
   readonly consumedAt: number | null
   readonly value?: string
-}) {
+}) => {
   const [copied, setCopied] = useState(false)
   const consumedLabel = consumedAt ? dateTime(consumedAt) : null
   const consumed = consumedAt !== null
@@ -136,13 +135,13 @@ function ReadRow({
   )
 }
 
-function ReadList({
+const ReadList = ({
   links,
   reads,
 }: {
   readonly links: readonly StoredTrackLink[]
   readonly reads: TrackSecretResponse['reads']
-}) {
+}) => {
   const linksByReadId = useMemo(() => {
     return new Map(links.map(link => [link.readId, link.value]))
   }, [links])
@@ -150,7 +149,7 @@ function ReadList({
   return (
     <div className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-xs">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] table-fixed border-collapse text-left">
+        <table className="w-full table-fixed border-collapse text-left">
           <colgroup>
             <col />
             <col className="w-[5.5rem]" />
@@ -184,7 +183,7 @@ function ReadList({
   )
 }
 
-export function TrackSecretIsland({ trackId }: TrackSecretIslandProps) {
+export const TrackSecretIsland = ({ trackId }: TrackSecretIslandProps) => {
   const [links, setLinks] = useState<readonly StoredTrackLink[]>([])
   const [refreshing, setRefreshing] = useState(false)
   const [secret, setSecret] = useState<TrackSecretResponse | null>(null)
@@ -252,8 +251,8 @@ export function TrackSecretIsland({ trackId }: TrackSecretIslandProps) {
 
   if (!secret) {
     return (
-      <section className="mx-auto w-full max-w-7xl px-9 md:px-18">
-        <div className="mx-auto max-w-[618px] pb-20">
+      <section className="mx-auto w-full px-9 md:px-18">
+        <div className="mx-auto w-full pb-20">
           {isLoading ? (
             <Loading />
           ) : (
@@ -265,63 +264,61 @@ export function TrackSecretIsland({ trackId }: TrackSecretIslandProps) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-9 md:px-18">
-      <div className="mx-auto max-w-[618px] pb-20">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Metric
-            label="Remaining"
-            value={`${secret.remainingReads}/${secret.readLimit}`}
-          />
-          <Metric label="Status" value={statusLabel(secret.status)} />
-          <Metric label="Creation" value={dateTime(secret.createdAt)} />
-          <Metric label="Expiration" value={dateTime(secret.expiresAt)} />
-          <Metric label="Opened" value={`${consumedReads}`} />
-          <Metric label="Destroyed" value={dateTime(secret.destroyedAt)} />
-        </div>
+    <AppContent>
+      <div className="grid gap-3 max-md:grid-cols-2 grid-cols-3 w-full">
+        <Metric
+          label="Remaining"
+          value={`${secret.remainingReads}/${secret.readLimit}`}
+        />
+        <Metric label="Status" value={statusLabel(secret.status)} />
+        <Metric label="Creation" value={dateTime(secret.createdAt)} />
+        <Metric label="Expiration" value={dateTime(secret.expiresAt)} />
+        <Metric label="Opened" value={`${consumedReads}`} />
+        <Metric label="Destroyed" value={dateTime(secret.destroyedAt)} />
+      </div>
 
-        <div className="mt-10 border-t border-zinc-100 pt-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 text-sm leading-6 font-medium text-zinc-800">
-                <HugeiconsIcon
-                  icon={Link01Icon}
-                  strokeWidth={1.7}
-                  className="size-3.5"
-                />
-                Read links
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Refresh read links"
-              aria-busy={refreshing}
-              data-loading={refreshing || undefined}
-              onClick={refreshSecret}
-              className="bg-white text-zinc-500 hover:text-zinc-800 data-[loading=true]:cursor-wait data-[loading=true]:text-zinc-800">
+      <div className="mt-10 border-t border-zinc-100 pt-6 w-full">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm leading-6 font-medium text-zinc-800">
               <HugeiconsIcon
-                icon={ReloadIcon}
+                icon={Link01Icon}
                 strokeWidth={1.7}
-                className={refreshing ? 'animate-spin' : undefined}
+                className="size-3.5"
               />
-            </Button>
+              Read links
+            </p>
           </div>
-          {status ? (
-            <p className="mt-3 text-xs leading-5 text-destructive">{status}</p>
-          ) : null}
-          <div className="mt-5">
-            {links.length ? (
-              <div className="grid gap-3">
-                <ReadLinksSessionAlert />
-                <ReadList links={links} reads={secret.reads} />
-              </div>
-            ) : (
-              <ReadLinksPlaceholder />
-            )}
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Refresh read links"
+            aria-busy={refreshing}
+            data-loading={refreshing || undefined}
+            onClick={refreshSecret}
+            className="bg-white text-zinc-500 hover:text-zinc-800 data-[loading=true]:cursor-wait data-[loading=true]:text-zinc-800">
+            <HugeiconsIcon
+              icon={ReloadIcon}
+              strokeWidth={1.7}
+              className={refreshing ? 'animate-spin' : undefined}
+            />
+          </Button>
+        </div>
+        {status ? (
+          <p className="mt-3 text-xs leading-5 text-destructive">{status}</p>
+        ) : null}
+        <div className="mt-5">
+          {links.length ? (
+            <div className="grid gap-3">
+              <ReadLinksSessionAlert />
+              <ReadList links={links} reads={secret.reads} />
+            </div>
+          ) : (
+            <ReadLinksPlaceholder />
+          )}
         </div>
       </div>
-    </section>
+    </AppContent>
   )
 }

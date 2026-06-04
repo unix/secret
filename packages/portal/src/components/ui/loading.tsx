@@ -1,5 +1,4 @@
 import type { ComponentProps, ReactNode } from 'react'
-
 import { cn } from '@/lib/utils'
 
 type LoadingProps = ComponentProps<'div'> & {
@@ -10,7 +9,7 @@ type LoadingProps = ComponentProps<'div'> & {
   readonly spinnerClassName?: string
 }
 
-function Loading({
+const Loading = ({
   children,
   className,
   label = 'Loading...',
@@ -18,7 +17,7 @@ function Loading({
   showLabel = true,
   spinnerClassName,
   ...props
-}: LoadingProps) {
+}: LoadingProps) => {
   const content = children ?? label
 
   return (

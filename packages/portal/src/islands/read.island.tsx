@@ -16,7 +16,7 @@ import {
   openFileManifest,
   openText,
 } from 'secret-cipher'
-
+import AppContent from '@/components/app-content'
 import { httpProgress, transferStatus } from '@/apis/progress'
 import { downloadFileBytes, readSecret } from '@/apis/secrets'
 import { Button } from '@/components/ui/button'
@@ -459,38 +459,36 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
   )
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-9 md:px-18">
-      <div className="mx-auto max-w-[618px] pb-20">
-        <div className="space-y-5">
-          {!openedSecret && <div className="text-center">{revealButton}</div>}
-          {!openedSecret && status && (
-            <p className="text-center text-xs leading-5 text-muted-foreground">
-              {status}
-            </p>
-          )}
-          {openedSecret && (
-            <>
-              {status && (
-                <p className="text-center text-xs leading-5 text-muted-foreground">
-                  {status}
-                </p>
-              )}
-              {openedSecret.kind === 'text' ? (
-                <OpenedTextSecret value={openedSecret.value} />
-              ) : (
-                <OpenedFileSecret
-                  fileSecret={openedSecret.fileSecret}
-                  manifest={openedSecret.manifest}
-                  readId={readId}
-                  salt={openedSecret.salt}
-                  onStatus={setStatus}
-                  onUsed={() => setUsed(true)}
-                />
-              )}
-            </>
-          )}
-        </div>
+    <AppContent>
+      <div className="space-y-5">
+        {!openedSecret && <div className="text-center">{revealButton}</div>}
+        {!openedSecret && status && (
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            {status}
+          </p>
+        )}
+        {openedSecret && (
+          <>
+            {status && (
+              <p className="text-center text-xs leading-5 text-muted-foreground">
+                {status}
+              </p>
+            )}
+            {openedSecret.kind === 'text' ? (
+              <OpenedTextSecret value={openedSecret.value} />
+            ) : (
+              <OpenedFileSecret
+                fileSecret={openedSecret.fileSecret}
+                manifest={openedSecret.manifest}
+                readId={readId}
+                salt={openedSecret.salt}
+                onStatus={setStatus}
+                onUsed={() => setUsed(true)}
+              />
+            )}
+          </>
+        )}
       </div>
-    </section>
+    </AppContent>
   )
 }

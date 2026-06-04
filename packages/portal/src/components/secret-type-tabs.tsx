@@ -1,5 +1,4 @@
 import { Tabs } from '@base-ui/react/tabs'
-
 import { cn } from '@/lib/utils'
 
 export type SecretTypeTabValue = 'text' | 'password' | 'file'

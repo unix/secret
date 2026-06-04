@@ -12,9 +12,9 @@ import HeadLayout from '@/layouts/head.layout.astro'
     <SecretHeader />
 
     <section
-      class="mx-auto flex min-h-[548px] w-full max-w-7xl flex-col justify-between px-9 md:px-18">
+      class="mx-auto flex min-h-[548px] w-full max-w-7xl flex-col justify-between px-16 max-md:px-6">
       <div
-        class="mx-auto flex w-full max-w-2xl flex-col items-center pt-38 text-center max-[480px]:max-w-71 md:pt-44">
+        class="mx-auto flex w-full max-w-2xl flex-col items-center pt-38 text-center">
         <h1
           aria-label="SECRET"
           class="text-5xl leading-none font-semibold text-zinc-950">
@@ -22,11 +22,10 @@ import HeadLayout from '@/layouts/head.layout.astro'
         </h1>
         <p
           class="mt-7 w-full max-w-2xl text-sm leading-6 font-normal text-zinc-600 md:text-base md:leading-7">
-          Secret will protect you when sharing information, you can use it to
-          send<br />
-          text without worrying about hijacked. For more, refer to
+          Share secrets that stay secret. Send encrypted text and files <br class="max-md:hidden" />
+          without giving the server the key. For more, refer to
           <a
-            href="/features"
+            href="/intro"
             class="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-950">Introduction</a>.
         </p>
         <div

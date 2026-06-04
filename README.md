@@ -1,11 +1,10 @@
-<p align="center" height="370">
-<img align="center" height="370" src="https://user-images.githubusercontent.com/11304944/109418912-a9f89d80-7a05-11eb-9d72-1fcc2faa09ed.png">
-</p>
-<br/>
+# Secret
 
-> Secret will protect you when sharing information,
-> you can use it to send text without worrying about hijacked.
-> For more, refer to [Introduction](https://secret.witt.im/0x01).
+Client-side encrypted, self-hostable secret sharing for text and files.
+
+Secret is a zero-knowledge sharing tool for short-lived private text and files.
+Payloads are encrypted on the client before upload, and the decryption key stays in the URL fragment so it is never sent to the server.
+Secrets can expire or be consumed once, reducing the lifetime of sensitive data.
 
 ## How to use
 

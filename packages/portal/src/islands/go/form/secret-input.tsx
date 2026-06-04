@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-
 import { FilePlaceholder } from './file-placeholder'
 import { FilePreview } from './file-preview'
 import type { SecretMode } from '@/islands/go/types'

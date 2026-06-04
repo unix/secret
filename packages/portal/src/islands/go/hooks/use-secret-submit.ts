@@ -16,7 +16,6 @@ import {
   uploadEncryptedFile,
 } from '@/apis/secrets'
 import { formatBytes, httpProgress, transferStatus } from '@/apis/progress'
-
 import {
   MAX_EXPIRATION_SECONDS,
   MAX_FILE_BYTES,

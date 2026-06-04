@@ -1,0 +1,169 @@
+---
+import SecretFooter from '@/components/astro/secret-footer.astro'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import SecretPageHero from '@/components/astro/secret-page-hero.astro'
+import PostContent from '@/components/astro/post-content.astro'
+import HeadLayout from '@/layouts/head.layout.astro'
+---
+
+<HeadLayout title="Secret - Terminal">
+  <main class="flex min-h-svh flex-col bg-white text-black">
+    <SecretHeader />
+    <SecretPageHero
+      title="Secret in Terminal"
+      description="Create, reveal, and track zero-knowledge secrets from a command line while keeping encryption on the client side."
+    />
+
+    <PostContent>
+      <p>
+        <a href="/">Secret</a> is a short-lived sharing system for private text and files.
+        The product model is intentionally small: clients encrypt data locally, the API
+        stores only ciphertext and lifecycle metadata, and the final access URL keeps the
+        decryption secret in the browser-only hash fragment.
+      </p>
+      <pre><code><span class="text-violet-600">portal or cli</span>
+  <span class="text-zinc-400">-&gt;</span> <span class="text-emerald-700">secret-cipher</span>: <span class="text-zinc-700">local encryption and access-url encoding</span>
+  <span class="text-zinc-400">-&gt;</span> <span class="text-sky-700">edge api</span>: <span class="text-zinc-700">ciphertext, read tokens, tracking, expiration</span>
+  <span class="text-zinc-400">-&gt;</span> <span class="text-amber-700">recipient</span>: <span class="text-zinc-700">decrypts locally with</span> <span class="text-violet-700">/s/&#123;readId&#125;#&#123;accessSecret&#125;</span></code></pre>
+      <p>
+        This means the web portal and terminal client share the same security
+        boundary. The terminal is just another client: it prepares encrypted payloads
+        with <code>secret-cipher</code>, sends ciphertext to the API, and prints read
+        links plus a tracking link.
+      </p>
+
+      <section>
+        <h2>Use Secret from a terminal</h2>
+        <p>
+          If you only want to try Secret, run <code>npx secret</code> without installing
+          it. The same command can create text secrets, create file secrets, and tune read
+          limits or expiration time for a quick test.
+        </p>
+        <pre><code><span class="text-zinc-500"># Create a text secret without installing.</span>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span>
+
+<span class="text-zinc-500"># Create 3 read links that expire in 15 minutes.</span>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span>
+
+<span class="text-zinc-500"># Create a file secret for a quick test.</span>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./incident-notes.txt</span>
+
+<span class="text-zinc-500"># Create a file secret with 5 read links and a 1 hour TTL.</span>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./archive.zip</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">5</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">3600</span></code></pre>
+        <p>
+          The main command prompts for the secret value, encrypts it locally, creates
+          one or more read links, and saves enough local tracking metadata for later
+          status checks.
+        </p>
+        <p>
+          For regular use, install the CLI globally with
+          <code>npm i secret -G</code>, then run <code>secret</code> directly from any
+          terminal.
+        </p>
+        <pre><code><span class="text-zinc-500"># Install for repeated use.</span>
+<span class="text-violet-700">npm</span> <span class="text-sky-700">i</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-G</span>
+
+<span class="text-zinc-500"># Create a text secret after installing.</span>
+<span class="text-violet-700">secret</span>
+
+<span class="text-zinc-500"># Create a file secret after installing.</span>
+<span class="text-violet-700">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./incident-notes.txt</span>
+
+<span class="text-zinc-500"># Create 3 read links that expire in 15 minutes.</span>
+<span class="text-violet-700">secret</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span></code></pre>
+        <p>
+          Files use the same model with chunk encryption and encrypted file metadata.
+          The API receives encrypted bytes and never sees the original filename,
+          content, or decryption key in plaintext.
+        </p>
+      </section>
+
+      <section>
+        <h2>Reveal and track</h2>
+        <p>
+          A recipient can reveal a text or file secret from the full URL. Text is
+          printed to the terminal. Files first show encrypted manifest details after
+          local decryption, then ask before downloading and decrypting the object.
+        </p>
+        <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">reveal</span> <span class="text-emerald-700">'https://secret.witt.im/s/read_123#access_secret'</span>
+
+<span class="text-zinc-500"># The CLI also accepts the compact readId.secret form.</span>
+<span class="text-violet-700">secret</span> <span class="text-sky-700">reveal</span> <span class="text-emerald-700">'read_123.access_secret'</span></code></pre>
+        <p>
+          The sender receives a separate tracking link and a track id. Use it to
+          inspect whether a secret is still ready, consumed, expired, or destroyed.
+        </p>
+        <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">track</span> <span class="text-emerald-700">track_123</span>
+<span class="text-violet-700">secret</span> <span class="text-sky-700">status</span></code></pre>
+      </section>
+
+      <section>
+        <h2>Self-host origins</h2>
+        <p>
+          Self-hosted users can point the CLI at their own API and portal origins.
+          The API origin is where ciphertext is created, read, tracked, and cleaned
+          up. The portal origin is used when the CLI prints browser-readable access
+          and tracking URLs.
+        </p>
+        <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">config</span> <span class="text-zinc-400">\</span>
+  <span class="text-amber-700">--api</span> <span class="text-emerald-700">https://secret-api.example.com</span> <span class="text-zinc-400">\</span>
+  <span class="text-amber-700">--portal</span> <span class="text-emerald-700">https://secret.example.com</span>
+
+<span class="text-zinc-500"># Local development hosts are normalized to http.</span>
+<span class="text-violet-700">secret</span> <span class="text-sky-700">config</span> <span class="text-amber-700">--api</span> <span class="text-emerald-700">localhost:3001</span> <span class="text-amber-700">--portal</span> <span class="text-emerald-700">localhost:3000</span></code></pre>
+        <p>
+          Origins are normalized before saving. A host without a protocol defaults to <code
+            >https</code
+          >, except localhost-style hosts, which default to
+          <code>http</code>. The config is stored in the user home directory under
+          <code>.secret-cli/config</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Build your own CLI</h2>
+        <p>
+          If you need to publish your own Secret-compatible command line tool, start
+          with <a
+            href="https://github.com/unix/secret/tree/main/packages/secret-cipher"
+            >packages/secret-cipher/README.md</a
+          >. The package is the stable boundary for local encryption, decryption, and
+          access URL encoding.
+        </p>
+        <ol>
+          <li>
+            Install <code>secret-cipher</code> and use <code>sealText</code>,
+            <code>openText</code>, <code>encodeTextAccessUrl</code>, and the file
+            helpers as your cryptographic core.
+          </li>
+          <li>
+            Implement API calls that store ciphertext, request read ids, complete
+            file uploads, load tracking state, and fetch encrypted payloads.
+          </li>
+          <li>
+            Add an origin configuration command equivalent to
+            <code>secret config --api --portal</code> so self-hosted users can target their
+            own deployment.
+          </li>
+          <li>
+            Rename the package and binary for your distribution, remove private
+            package metadata, then build and publish through your usual npm release
+            process.
+          </li>
+        </ol>
+        <pre><code><span class="text-violet-700">import</span> &#123; <span class="text-sky-700">encodeTextAccessUrl</span>, <span class="text-sky-700">openText</span>, <span class="text-sky-700">sealText</span> &#125; <span class="text-violet-700">from</span> <span class="text-emerald-700">'secret-cipher'</span>
+
+<span class="text-violet-700">const</span> sealed = <span class="text-violet-700">await</span> <span class="text-sky-700">sealText</span>(<span class="text-emerald-700">'private text'</span>)
+<span class="text-violet-700">const</span> url = <span class="text-sky-700">encodeTextAccessUrl</span>(&#123;
+  <span class="text-amber-700">origin</span>: <span class="text-emerald-700">'https://secret.example.com'</span>,
+  <span class="text-amber-700">readId</span>: <span class="text-emerald-700">'read_123'</span>,
+  <span class="text-amber-700">secret</span>: sealed.secret,
+&#125;)
+
+          <span class="text-violet-700">const</span> text = <span class="text-violet-700">await</span> <span class="text-sky-700">openText</span>(sealed)</code></pre>
+      </section>
+    </PostContent>
+
+    <SecretFooter />
+  </main>
+</HeadLayout>

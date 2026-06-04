@@ -1,5 +1,4 @@
 import type { AxiosProgressEvent } from 'axios'
-
 import { apiClient, responseData, transferClient } from './http'
 
 export type TextSecretResponse = {

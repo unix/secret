@@ -1,0 +1,14 @@
+---
+interface Props {
+  class?: string | undefined
+  contentClass?: string | undefined
+}
+
+const { class: className, contentClass } = Astro.props
+---
+
+<section class:list={['mx-auto max-w-4xl max-md:w-full max-md:pt-10', className]}>
+  <article class:list={['post-content px-14 pb-20 max-md:px-4', contentClass]}>
+    <slot />
+  </article>
+</section>
