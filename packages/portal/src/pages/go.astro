@@ -1,4 +1,5 @@
 ---
+import GoSecretSkeleton from '@/components/astro/go-secret-skeleton.astro'
 import SecretFooter from '@/components/astro/secret-footer.astro'
 import SecretHeader from '@/components/astro/secret-header.astro'
 import { GoSecretIsland } from '@/islands/go'
@@ -9,7 +10,9 @@ import HeadLayout from '@/layouts/head.layout.astro'
   <main
     class="flex min-h-svh flex-col bg-white text-zinc-950 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px]">
     <SecretHeader compact showBrandText={false} />
-    <GoSecretIsland client:only="react" />
+    <GoSecretIsland client:only="react">
+      <GoSecretSkeleton slot="fallback" />
+    </GoSecretIsland>
     <SecretFooter />
   </main>
 </HeadLayout>
