@@ -14,7 +14,6 @@ Follow this sequence to deploy your own instance:
 
 2. Review `.env` and `secret.config.json`, then fill in the required deployment values:
    - Start with the [required `.env` variables](#required-environment-variables) for your Cloudflare account, R2 credentials, and D1 database.
-
    - Create or choose the R2 bucket and D1 database, then copy their names, IDs, and access keys into `.env`.
    - Confirm the client and API domains in `secret.config.json`, and set any deployment limits.
 
@@ -77,17 +76,6 @@ The `limits` object uses a small naming convention so each value's owner is clea
 `CLIENT_VALID_EXPIRATIONS_SECONDS` and `CLIENT_VALID_LINK_COUNTS` only control which values the client shows by default. They do not override the hybrid limits.
 
 For example, if the largest value in `CLIENT_VALID_EXPIRATIONS_SECONDS` is greater than `HYBRID_MAX_SECRET_TTL_SECONDS`, the request will still be rejected by client preflight validation or by the API. The same applies when `CLIENT_VALID_LINK_COUNTS` contains a value greater than `HYBRID_MAX_READS`.
-
-## Generate Configuration
-
-The self-host package generates the deployment configuration and applies the R2
-bucket CORS policy:
-
-```sh
-pnpm install
-pnpm wrangler login
-pnpm --filter @secret-next/self-host dev
-```
 
 ## Required Environment Variables
 
