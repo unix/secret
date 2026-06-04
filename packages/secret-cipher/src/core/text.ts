@@ -5,21 +5,18 @@ import { resolveCipherRuntime } from '../runtimes'
 import { decodeAccessUrl, encodeAccessUrl } from './shared/access-url'
 import { deriveKey, encodeCipherPayload, parseCipherPayload } from './shared/crypto'
 import { createSecret, parseSecret, secretFromString } from './shared/secret'
-
 import type { CipherRuntimeOptions } from '../types'
 
 const TEXT_INFO = utf8ToBytes(`${SECRET_CONTEXT.PREFIX}text-key`)
 const TEXT_AAD = utf8ToBytes(`${SECRET_CONTEXT.PREFIX}text`)
 
-export type TextSecret = string & { readonly __brand: 'TextSecret' }
+export type TextSecret = string
 
-export type TextCiphertext = string & { readonly __brand: 'TextCiphertext' }
+export type TextCiphertext = string
 
-export type TextAccessFragment = string & {
-  readonly __brand: 'TextAccessFragment'
-}
+export type TextAccessFragment = string
 
-export type TextAccessUrl = string & { readonly __brand: 'TextAccessUrl' }
+export type TextAccessUrl = string
 
 export type SealTextOptions = CipherRuntimeOptions & {
   readonly secret?: TextSecret | string
@@ -53,11 +50,11 @@ export type DecodedTextAccessUrl = DecodedTextAccessFragment & {
 export const createTextSecret = async (
   options: CipherRuntimeOptions = {},
 ): Promise<TextSecret> => {
-  return createSecret<TextSecret>(options)
+  return createSecret(options)
 }
 
 export const textSecretFromString = (value: string): TextSecret => {
-  return secretFromString<TextSecret>(value)
+  return secretFromString(value)
 }
 
 export const sealText = async (
@@ -85,7 +82,7 @@ export const sealText = async (
   })
 
   return {
-    cipher: encodeCipherPayload({ salt, iv, ciphertext }) as TextCiphertext,
+    cipher: encodeCipherPayload({ salt, iv, ciphertext }),
     secret,
   }
 }
@@ -124,7 +121,7 @@ export const openText = async ({
 export const encodeTextAccessFragment = (
   secret: TextSecret | string,
 ): TextAccessFragment => {
-  return `#${textSecretFromString(secret)}` as TextAccessFragment
+  return `#${textSecretFromString(secret)}`
 }
 
 export const decodeTextAccessFragment = (
@@ -153,7 +150,7 @@ export const encodeTextAccessUrl = ({
     origin,
     basePath,
     fragment: encodeTextAccessFragment(secret),
-  }) as TextAccessUrl
+  })
 }
 
 export const decodeTextAccessUrl = (

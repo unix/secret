@@ -2,7 +2,6 @@ import { base64UrlToBytes, bytesToBase64Url } from '../bytes'
 import { resolveCipherRuntime } from '../../runtimes'
 import { ERRORS, SECRET_BYTES } from '../../utils/constants'
 import { CipherError } from '../../utils/errors'
-
 import type { CipherRuntimeOptions } from '../../types'
 
 export const parseSecret = (value: string): Uint8Array => {
@@ -12,14 +11,15 @@ export const parseSecret = (value: string): Uint8Array => {
   throw new CipherError(ERRORS.INVALID_KEY, `Expected ${SECRET_BYTES.ACCESS} bytes.`)
 }
 
-export const secretFromString = <Secret extends string>(value: string): Secret => {
+export const secretFromString = (value: string): string => {
   parseSecret(value)
-  return value as Secret
+  return value
 }
 
-export const createSecret = async <Secret extends string>(
+export const createSecret = async (
   options: CipherRuntimeOptions = {},
-): Promise<Secret> => {
+): Promise<string> => {
   const runtime = await resolveCipherRuntime(options)
-  return bytesToBase64Url(runtime.randomBytes(SECRET_BYTES.ACCESS)) as Secret
+
+  return bytesToBase64Url(runtime.randomBytes(SECRET_BYTES.ACCESS))
 }

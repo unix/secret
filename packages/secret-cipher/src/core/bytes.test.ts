@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import { CipherError, ERRORS, base64UrlToBytes, bytesToBase64Url } from '../index'
 import { bytesToHex, bytesToUtf8, concatBytes, utf8ToBytes } from './bytes'
 

@@ -14,7 +14,6 @@ import {
 import { decodeAccessUrl, encodeAccessUrl } from './shared/access-url'
 import { deriveKey } from './shared/crypto'
 import { createSecret, parseSecret, secretFromString } from './shared/secret'
-
 import type { CipherRuntimeOptions } from '../types'
 
 const DEFAULT_FILE_CHUNK_SIZE_BYTES = 8 * 1024 * 1024
@@ -24,13 +23,11 @@ const MANIFEST_INFO = utf8ToBytes(`${SECRET_CONTEXT.PREFIX}file-manifest-key`)
 const NONCE_INFO = utf8ToBytes(`${SECRET_CONTEXT.PREFIX}file-chunk-nonce`)
 const MANIFEST_AAD = utf8ToBytes(`${SECRET_CONTEXT.PREFIX}file-manifest`)
 
-export type FileSecret = string & { readonly __brand: 'FileSecret' }
+export type FileSecret = string
 
-export type FileAccessFragment = string & {
-  readonly __brand: 'FileAccessFragment'
-}
+export type FileAccessFragment = string
 
-export type FileAccessUrl = string & { readonly __brand: 'FileAccessUrl' }
+export type FileAccessUrl = string
 
 export type FileManifest = {
   readonly name: string
@@ -96,20 +93,56 @@ export type DecodedFileAccessUrl = DecodedFileAccessFragment & {
 
 export const defaultFileChunkSizeBytes = DEFAULT_FILE_CHUNK_SIZE_BYTES
 
+const fileManifestFromValue = (value: unknown): FileManifest => {
+  if (
+    isRecord(value) &&
+    typeof value.name === 'string' &&
+    typeof value.type === 'string' &&
+    isSafeNonNegativeInteger(value.size) &&
+    isSafePositiveInteger(value.chunkSize) &&
+    isSafePositiveInteger(value.chunkCount) &&
+    (value.lastModified === undefined ||
+      isSafeNonNegativeInteger(value.lastModified))
+  ) {
+    return {
+      name: value.name,
+      type: value.type,
+      size: value.size,
+      lastModified: value.lastModified,
+      chunkSize: value.chunkSize,
+      chunkCount: value.chunkCount,
+    }
+  }
+
+  throw new CipherError(ERRORS.INVALID_CIPHERTEXT, 'Invalid file manifest.')
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
+}
+
+const isSafePositiveInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+}
+
+const isSafeNonNegativeInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
 export const createFileSecret = async (
   options: CipherRuntimeOptions = {},
 ): Promise<FileSecret> => {
-  return createSecret<FileSecret>(options)
+  return createSecret(options)
 }
 
 export const fileSecretFromString = (value: string): FileSecret => {
-  return secretFromString<FileSecret>(value)
+  return secretFromString(value)
 }
 
 export const encodeFileAccessFragment = (
   secret: FileSecret | string,
 ): FileAccessFragment => {
-  return `#${fileSecretFromString(secret)}` as FileAccessFragment
+  return `#${fileSecretFromString(secret)}`
 }
 
 export const decodeFileAccessFragment = (
@@ -138,7 +171,7 @@ export const encodeFileAccessUrl = ({
     origin,
     basePath,
     fragment: encodeFileAccessFragment(secret),
-  }) as FileAccessUrl
+  })
 }
 
 export const decodeFileAccessUrl = (
@@ -208,7 +241,9 @@ export const openFileManifest = async ({
       additionalData: MANIFEST_AAD,
     })
 
-    return JSON.parse(bytesToUtf8(plaintext)) as FileManifest
+    const manifest: unknown = JSON.parse(bytesToUtf8(plaintext))
+
+    return fileManifestFromValue(manifest)
   } catch (error) {
     throw new CipherError(
       ERRORS.OPERATION_FAILED,
