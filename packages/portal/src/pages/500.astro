@@ -1,0 +1,35 @@
+---
+import HeadLayout from '@/layouts/head.layout.astro'
+
+export const prerender = true
+---
+
+<HeadLayout
+  title="Secret - Server Error"
+  description="This Secret page could not be rendered right now.">
+  <main
+    aria-labelledby="server-error-title"
+    class="flex min-h-svh bg-white text-zinc-950 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px]">
+    <section
+      class="mx-auto flex w-full max-w-3xl flex-col items-center justify-center px-5 py-16 text-center">
+      <div
+        class="mb-6">
+        <h2 id="server-error-title" class="text-lg font-medium text-zinc-950">
+          500 Server Error
+        </h2>
+        <p class="mt-1 text-sm leading-6 text-zinc-600 sm:text-base">
+          This page could not be rendered right now.
+        </p>
+      </div>
+      <div
+        class="flex">
+        <a
+          href="/"
+          draggable="false"
+          class="text-sm font-medium text-zinc-600 underline decoration-zinc-400 decoration-dashed underline-offset-4 transition-colors hover:decoration-zinc-900 focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none">
+          Back to Secret
+        </a>
+      </div>
+    </section>
+  </main>
+</HeadLayout>
