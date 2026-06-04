@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-
 import { completeFileSecret, initFileSecret } from '@/routes/secrets/files'
 import { downloadFileSecret, readSecret } from '@/routes/secrets/read'
 import { storeTextSecret } from '@/routes/secrets/text'

@@ -27,22 +27,22 @@ const errorMessages = (error: unknown): readonly string[] => {
       continue
     }
 
-    if (!current || typeof current !== 'object') {
+    if (!isRecord(current)) {
       break
     }
 
-    const errorRecord = current as {
-      readonly cause?: unknown
-      readonly message?: unknown
-    }
-    if (typeof errorRecord.message === 'string') {
-      messages.push(errorRecord.message)
+    if (typeof current.message === 'string') {
+      messages.push(current.message)
     }
 
-    current = errorRecord.cause
+    current = current.cause
   }
 
   return messages
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
 }
 
 const isRetryableD1ReadError = (error: unknown): boolean => {

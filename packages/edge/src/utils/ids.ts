@@ -1,5 +1,4 @@
 import { bytesToBase64Url } from 'secret-cipher'
-
 import { READ_ID_BYTES } from '@/utils/config'
 
 export const randomId = (byteLength: number): string => {
