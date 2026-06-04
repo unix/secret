@@ -1,5 +1,4 @@
 import { Command, Handler } from 'func'
-
 import { StatusService } from '../services/status'
 import { green, printHelp, printJson } from '../utils/terminal'
 

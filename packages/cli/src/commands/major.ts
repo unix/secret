@@ -1,10 +1,17 @@
 import { Args, CommandMajor, Flag, FuncArgs, Handler, Value } from 'func'
-
 import { CleanupService } from '../services/cleanup'
 import { CreatedSecret, CreateSecretService } from '../services/create-secret'
 import { DEFAULT_EXPIRATION_SECONDS, DEFAULT_LINK_COUNT } from '../utils/constants'
 import { printExpectedError } from '../utils/expected-error'
-import { cyan, dim, loading, printHelp, promptText, yellow } from '../utils/terminal'
+import {
+  cyan,
+  dim,
+  errorLine,
+  loading,
+  printHelp,
+  promptText,
+  yellow,
+} from '../utils/terminal'
 import { printTrackLinks } from '../utils/track-output'
 import { expirationSeconds, linkCount } from '../utils/validators'
 
@@ -24,7 +31,7 @@ export class Major {
   }
 
   private static PrintFilePathHelp(): void {
-    console.log(yellow('File upload needs a file path.'))
+    console.error(errorLine('MISSING-FILE-PATH', 'File upload needs a file path.'))
     console.log(`Example: ${dim('secret -f ./notes.txt')}`)
   }
 

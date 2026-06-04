@@ -2,7 +2,6 @@ import { open, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
 import { openFileChunk, openFileManifest, openText as openCipherText } from 'secret-cipher'
 import { Service } from 'func'
-
 import { CONFIG_KEYS, configs } from '../configs'
 import { ApiClient, type SecretResponse, type TransferProgress } from '../utils/api'
 import { decodeAccess } from '../utils/links'

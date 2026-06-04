@@ -1,7 +1,6 @@
 import { lstat, readdir, readFile, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Service } from 'func'
-
 import { CONFIG_KEYS, configDir, configs } from '../configs'
 import {
   CLEANUP_INTERVAL_MS,

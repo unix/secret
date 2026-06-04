@@ -1,5 +1,4 @@
 import { Args, Command, FuncArgs, Handler } from 'func'
-
 import { TrackService } from '../services/track'
 import { CliUserError, printExpectedError } from '../utils/expected-error'
 import { printHelp, yellow } from '../utils/terminal'

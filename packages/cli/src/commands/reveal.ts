@@ -1,5 +1,4 @@
 import { Args, Command, FuncArgs, Handler } from 'func'
-
 import { RevealService } from '../services/reveal'
 import { CliUserError, printExpectedError } from '../utils/expected-error'
 import { confirm, loading, printHelp, red, yellow } from '../utils/terminal'

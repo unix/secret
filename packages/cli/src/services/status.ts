@@ -1,5 +1,4 @@
 import { Service } from 'func'
-
 import { CONFIG_KEYS, configs } from '../configs'
 import { ApiClient } from '../utils/api'
 

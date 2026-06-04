@@ -1,5 +1,4 @@
 import { FuncModule } from 'func'
-
 import { commands } from './commands'
 import { services } from './services'
 

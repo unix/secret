@@ -23,7 +23,7 @@ export const optionNumber = (value: unknown): number | undefined => {
 
 export const expirationSeconds = (value: unknown): number => {
   const number = optionNumber(value) ?? DEFAULT_EXPIRATION_SECONDS
-  if (VALID_EXPIRATIONS.includes(number as (typeof VALID_EXPIRATIONS)[number])) {
+  if (includesNumber(VALID_EXPIRATIONS, number)) {
     if (number > MAX_EXPIRATION_SECONDS) {
       throw new CliUserError(
         `Expiration cannot exceed ${MAX_EXPIRATION_SECONDS} seconds.`,
@@ -40,7 +40,7 @@ export const expirationSeconds = (value: unknown): number => {
 
 export const linkCount = (value: unknown): number => {
   const number = optionNumber(value) ?? DEFAULT_LINK_COUNT
-  if (VALID_LINK_COUNTS.includes(number as (typeof VALID_LINK_COUNTS)[number])) {
+  if (includesNumber(VALID_LINK_COUNTS, number)) {
     if (number > MAX_LINK_COUNT) {
       throw new CliUserError(`Links cannot exceed ${MAX_LINK_COUNT}.`)
     }
@@ -49,4 +49,8 @@ export const linkCount = (value: unknown): number => {
   }
 
   throw new CliUserError(`Links must be one of ${VALID_LINK_COUNTS.join(', ')}.`)
+}
+
+const includesNumber = (values: readonly number[], value: number): boolean => {
+  return values.some(item => item === value)
 }

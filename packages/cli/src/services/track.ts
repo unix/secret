@@ -1,5 +1,4 @@
 import { Service } from 'func'
-
 import { CONFIG_KEYS, configs } from '../configs'
 import { ApiClient, type TrackSecretResponse } from '../utils/api'
 import { loadTrack, type StoredTrack } from '../utils/storage'

@@ -1,5 +1,4 @@
 import { Command, Handler, Value } from 'func'
-
 import { CONFIG_KEYS, configs } from '../configs'
 import { CliUserError, printExpectedError } from '../utils/expected-error'
 import { green, printHelp, printJson } from '../utils/terminal'

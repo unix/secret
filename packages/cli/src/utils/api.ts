@@ -66,9 +66,14 @@ type ApiClientOptions = {
 
 type ProgressHandler = (progress: TransferProgress) => void
 
+type UploadRequestInit = RequestInit & {
+  readonly duplex: 'half'
+}
+
 const TRANSFER_CHUNK_BYTES = 64 * 1024
 
 export class ApiClientError extends Error {
+  readonly code = 'API-REQUEST-FAILED'
   readonly status: number
 
   constructor(message: string, status: number) {
@@ -128,18 +133,15 @@ export class ApiClient {
     body: Uint8Array,
     onProgress?: ProgressHandler,
   ): Promise<void> {
-    const response = await ApiClient.Fetch(
-      uploadUrl,
-      {
-        body: ApiClient.UploadBody(body, onProgress),
-        duplex: 'half',
-        headers: {
-          'content-length': String(body.byteLength),
-        },
-        method: 'PUT',
-      } as RequestInit,
-      'Unable to upload file.',
-    )
+    const init: UploadRequestInit = {
+      body: ApiClient.UploadBody(body, onProgress),
+      duplex: 'half',
+      headers: {
+        'content-length': String(body.byteLength),
+      },
+      method: 'PUT',
+    }
+    const response = await ApiClient.Fetch(uploadUrl, init, 'Unable to upload file.')
     if (response.ok) return
 
     throw new ApiClientError(
@@ -326,6 +328,10 @@ export class ApiClient {
     return output
   }
 
+  private static async Json<T>(response: Response): Promise<T> {
+    return JSON.parse(await response.text())
+  }
+
   private static IsApiErrorBody(value: unknown): value is ApiErrorBody {
     return typeof value === 'object' && value !== null && 'error' in value
   }
@@ -352,7 +358,7 @@ export class ApiClient {
       },
       options.fallback,
     )
-    if (response.ok) return (await response.json()) as T
+    if (response.ok) return await ApiClient.Json<T>(response)
 
     throw new ApiClientError(
       await ApiClient.ErrorMessage(response, options.fallback),

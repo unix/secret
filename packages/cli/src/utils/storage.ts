@@ -1,6 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-
 import { configDir, ensureConfigDir } from '../configs/files'
 import { TRACK_FILE_PREFIX } from './constants'
 
@@ -32,11 +31,9 @@ export const loadTrack = async (trackId: string): Promise<StoredTrack | null> =>
   try {
     const raw = await readFile(trackFile(trackId), 'utf8')
     const parsed: unknown = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object') return null
-    if (!('trackId' in parsed) || parsed.trackId !== trackId) return null
-    if (!('links' in parsed) || !Array.isArray(parsed.links)) return null
+    if (!isStoredTrack(parsed, trackId)) return null
 
-    return parsed as StoredTrack
+    return parsed
   } catch (error) {
     if (error && typeof error === 'object' && 'code' in error) {
       if (error.code === 'ENOENT') return null
@@ -44,4 +41,28 @@ export const loadTrack = async (trackId: string): Promise<StoredTrack | null> =>
 
     throw error
   }
+}
+
+const isStoredTrack = (value: unknown, trackId: string): value is StoredTrack => {
+  return (
+    isRecord(value) &&
+    (value.kind === 'text' || value.kind === 'file') &&
+    value.trackId === trackId &&
+    typeof value.trackUrl === 'string' &&
+    typeof value.createdAt === 'number' &&
+    Array.isArray(value.links) &&
+    value.links.every(isStoredTrackLink)
+  )
+}
+
+const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
+  return (
+    isRecord(value) &&
+    typeof value.readId === 'string' &&
+    typeof value.value === 'string'
+  )
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
 }

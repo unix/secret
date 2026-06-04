@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { basename } from 'node:path'
@@ -9,7 +10,6 @@ import {
   sealText,
 } from 'secret-cipher'
 import { Service } from 'func'
-
 import { CONFIG_KEYS, configs } from '../configs'
 import { ApiClient, type TransferProgress } from '../utils/api'
 import {
@@ -221,8 +221,12 @@ export class CreateSecretService {
     for await (const chunk of createReadStream(filePath, {
       highWaterMark: chunkSize,
     })) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new CliUserError('File stream returned an unexpected chunk type.')
+      }
+
       const encrypted = await sealFileChunk({
-        chunk: new Uint8Array(chunk as Buffer),
+        chunk: new Uint8Array(chunk),
         chunkIndex,
         chunkCount,
         chunkSize,

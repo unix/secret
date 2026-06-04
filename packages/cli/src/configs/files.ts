@@ -2,7 +2,6 @@ import { constants } from 'node:fs'
 import { access, mkdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-
 import { CONFIG_DIR_NAME, CONFIG_FILE_NAME } from '../utils/constants'
 
 export const configDir = (): string => {

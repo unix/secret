@@ -1,5 +1,4 @@
 import { readFile, writeFile } from 'node:fs/promises'
-
 import { LOCAL, PRODUCTION } from '../utils/constants'
 import { configFile, ensureConfigDir } from './files'
 import { isLocalOrigin, isLocalRuntime } from './environment'

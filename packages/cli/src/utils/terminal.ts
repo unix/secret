@@ -1,12 +1,14 @@
 import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
-
 import type { Options, Spinner } from 'yocto-spinner'
-
 import { VALID_EXPIRATIONS, VALID_LINK_COUNTS } from './constants'
 
 const color = (code: number, value: string): string => {
   return `\u001b[${code}m${value}\u001b[0m`
+}
+
+const backgroundColor = (code: number, value: string): string => {
+  return `\u001b[37;${code}m${value}\u001b[0m`
 }
 
 export const dim = (value: string): string => color(2, value)
@@ -14,6 +16,10 @@ export const cyan = (value: string): string => color(36, value)
 export const green = (value: string): string => color(32, value)
 export const red = (value: string): string => color(31, value)
 export const yellow = (value: string): string => color(33, value)
+
+export const errorLine = (label: string, message: string): string => {
+  return `${backgroundColor(41, `[${label}]`)} ${red(message)}`
+}
 
 type LoadingTask = {
   readonly text: (value: string) => void
@@ -32,11 +38,28 @@ const supportsLoading = (): boolean => {
 }
 
 const loadSpinner = (): Promise<YoctoSpinnerModule> => {
-  spinnerModule ??= Function(
-    'return import("yocto-spinner")',
-  )() as Promise<YoctoSpinnerModule>
+  spinnerModule ??= importYoctoSpinner()
 
   return spinnerModule
+}
+
+const importYoctoSpinner = async (): Promise<YoctoSpinnerModule> => {
+  const imported: unknown = await Function(
+    'specifier',
+    'return import(specifier)',
+  )('yocto-spinner')
+  if (isYoctoSpinnerModule(imported)) return imported
+
+  throw new Error('yocto-spinner module has an unexpected shape.')
+}
+
+const isYoctoSpinnerModule = (value: unknown): value is YoctoSpinnerModule => {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'default' in value &&
+    typeof value.default === 'function'
+  )
 }
 
 export const loading = (text: string): LoadingTask => {

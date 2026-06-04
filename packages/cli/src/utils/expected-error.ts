@@ -1,10 +1,13 @@
 import { ApiClientError } from './api'
-import { yellow } from './terminal'
+import { errorLine } from './terminal'
 
 export class CliUserError extends Error {
-  constructor(message: string) {
+  readonly code: string
+
+  constructor(message: string, code = 'USER-ERROR') {
     super(message)
     this.name = 'CliUserError'
+    this.code = code
   }
 }
 
@@ -13,7 +16,7 @@ export const printExpectedError = (error: unknown): boolean => {
     return false
   }
 
-  console.log(yellow(error.message))
+  console.error(errorLine(error.code, error.message))
 
   return true
 }

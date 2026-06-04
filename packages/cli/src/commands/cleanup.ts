@@ -1,5 +1,4 @@
 import { Command, Handler, Value } from 'func'
-
 import { CleanupService } from '../services/cleanup'
 import { green, printHelp } from '../utils/terminal'
 
