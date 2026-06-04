@@ -5,6 +5,30 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 
+const color = (code, value) => {
+  return `\u001b[${code}m${value}\u001b[0m`
+}
+
+const backgroundColor = (code, value) => {
+  return `\u001b[37;${code}m${value}\u001b[0m`
+}
+
+const errorLine = (label, message) => {
+  return `${backgroundColor(41, `[${label}]`)} ${color(31, message)}`
+}
+
+const errorMessage = (error) => {
+  return error instanceof Error ? error.message : String(error)
+}
+
+const printScriptError = (error) => {
+  console.error(errorLine('SCRIPT-FAILED', errorMessage(error)))
+  process.exitCode = 1
+}
+
+process.on('uncaughtException', printScriptError)
+process.on('unhandledRejection', printScriptError)
+
 const PACKAGE_NAME = 'secret-cipher'
 const WORKSPACE_SPECIFIER = 'workspace:*'
 const DEPENDENCY_FIELDS = [
@@ -17,7 +41,7 @@ const DEPENDENCY_FIELDS = [
 const mode = process.argv[2] ?? 'workspace'
 
 if (!['workspace', 'npm'].includes(mode)) {
-  console.error('Usage: node scripts/sync-secret-cipher-deps.mjs <workspace|npm>')
+  console.error(errorLine('INVALID-ARGUMENTS', 'Usage: node scripts/sync-secret-cipher-deps.mjs <workspace|npm>'))
   process.exit(1)
 }
 

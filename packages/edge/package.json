@@ -1,11 +1,11 @@
 {
-  "name": "@secret-next/edge",
+  "name": "edge",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --port 3001",
-    "deploy": "wrangler deploy --minify",
+    "release": "pnpm --filter secret-cipher build && pnpm db:migrate && wrangler deploy --minify --secrets-file .dev.vars",
     "db:apply": "wrangler d1 execute secret-next --remote --file schema.sql",
     "db:migrate": "wrangler d1 migrations apply secret-next --remote",
     "format": "prettier --write .",

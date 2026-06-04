@@ -4,7 +4,7 @@ Hono app for Cloudflare Workers.
 
 ```txt
 pnpm dev
-pnpm deploy
+pnpm release
 pnpm db:apply
 pnpm typegen
 ```

@@ -1,13 +1,14 @@
 {
   "name": "secret-self-host",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
   "type": "commonjs",
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=\"-r tsconfig-paths/register\" funcgo dev --",
+    "dev": "funcgo dev --",
     "build": "funcgo build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "release": "pnpm build && pnpm publish --access public --no-git-checks"
   },
   "prettier": "@norehq/prettier",
   "files": [
@@ -30,10 +31,8 @@
   "devDependencies": {
     "@norehq/prettier": "^0.1.0",
     "@types/node": "^24.12.3",
-    "cross-env": "^10.1.0",
     "funcgo": "^0.1.2",
     "prettier": "^3.8.3",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   }
 }

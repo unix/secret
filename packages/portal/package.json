@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev --port 3000",
     "build": "astro build",
+    "release": "pnpm --filter secret-cipher build && pnpm build && wrangler deploy --minify",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "astro preview",
@@ -41,6 +42,7 @@
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "7.3.5"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "secret",
-  "version": "0.0.0",
-  "private": true,
+  "version": "2.0.0",
+  "private": false,
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
@@ -10,14 +10,16 @@
     "setup": "funcgo setup",
     "test": "pnpm build && vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "release": "pnpm build && pnpm publish --access public --no-git-checks"
   },
   "prettier": "@norehq/prettier",
   "files": [
     "dist",
     "README.md",
     "package.json",
-    "tsconfig.json"
+    "tsconfig.json",
+    "self-host.ts"
   ],
   "func": {
     "entry": "src/index.ts",

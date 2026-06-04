@@ -1,5 +1,5 @@
 {
-  "name": "secret-next",
+  "name": "secret-workspace",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -7,9 +7,9 @@
     "secret-cipher": "node scripts/sync-secret-cipher-deps.mjs workspace",
     "secret-cipher:workspace": "node scripts/sync-secret-cipher-deps.mjs workspace",
     "secret-cipher:npm": "node scripts/sync-secret-cipher-deps.mjs npm",
-    "deploy:setup": "",
-    "deploy:edge": "",
-    "deploy:portal": ""
+    "release:setup": "pnpm dlx secret-self-host@latest",
+    "release:edge": "pnpm --filter edge release",
+    "release:portal": "pnpm --filter portal release"
   },
   "packageManager": "pnpm@11.1.3",
   "devDependencies": {
