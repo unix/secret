@@ -18,11 +18,23 @@ type SettingsPanelProps = {
   readonly settings: SecretSettings
 }
 
+type SettingsOption = {
+  readonly label: string
+  readonly value: string
+}
+
+const optionLabel = (options: readonly SettingsOption[], value: string): string => {
+  return options.find(option => option.value === value)?.label ?? value
+}
+
 export const SettingsPanel = ({
   onExpiresChange,
   onReadsChange,
   settings,
 }: SettingsPanelProps) => {
+  const expirationLabel = optionLabel(expirationOptions, settings.expiresInSeconds)
+  const readLabel = optionLabel(readOptions, settings.reads)
+
   return (
     <div className="grid rounded-lg border border-zinc-200 bg-white shadow-xs divide-y divide-zinc-100">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -39,7 +51,7 @@ export const SettingsPanel = ({
           }}>
           <SelectTrigger className="w-full border-zinc-200 bg-white sm:w-36">
             <HugeiconsIcon icon={Clock01Icon} strokeWidth={1.7} />
-            <SelectValue placeholder="Expiration" />
+            <SelectValue placeholder="Expiration">{expirationLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {expirationOptions.map(option => (
@@ -64,7 +76,7 @@ export const SettingsPanel = ({
           }}>
           <SelectTrigger className="w-full border-zinc-200 bg-white sm:w-36">
             <HugeiconsIcon icon={Key01Icon} strokeWidth={1.7} />
-            <SelectValue placeholder="Read links" />
+            <SelectValue placeholder="Read links">{readLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {readOptions.map(option => (
