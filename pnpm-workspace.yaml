@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+allowBuilds:
+  esbuild: true
+  msw: true
+  sharp: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - shadcn@4.9.0
+  - func@2.1.0
+  - secret-cipher@0.1.1

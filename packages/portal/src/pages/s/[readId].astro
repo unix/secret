@@ -1,0 +1,23 @@
+---
+import SecretFooter from '@/components/astro/secret-footer.astro'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import SecretPageHero from '@/components/astro/secret-page-hero.astro'
+import { ReadSecretIsland } from '@/islands/read.island'
+import HeadLayout from '@/layouts/head.layout.astro'
+
+export const prerender = false
+
+const { readId } = Astro.params
+---
+
+<HeadLayout title="Secret - Read">
+  <main class="flex min-h-svh flex-col bg-white text-black">
+    <SecretHeader />
+    <SecretPageHero
+      title="Open Secret"
+      description="Reveal the secret only when you are ready."
+    />
+    {readId && <ReadSecretIsland readId={readId} client:only="react" />}
+    <SecretFooter />
+  </main>
+</HeadLayout>

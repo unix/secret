@@ -1,0 +1,42 @@
+{
+  "name": "secret",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "funcgo dev --",
+    "build": "pnpm --filter secret-cipher build && funcgo build",
+    "setup": "funcgo setup",
+    "test": "pnpm build && vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "prettier": "@norehq/prettier",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "func": {
+    "entry": "src/index.ts",
+    "outDir": "dist"
+  },
+  "bin": {
+    "cli": "./dist/bin.js"
+  },
+  "dependencies": {
+    "func": "^2.1.0",
+    "secret-cipher": "^0.1.1",
+    "yocto-spinner": "^1.2.0"
+  },
+  "devDependencies": {
+    "@norehq/prettier": "^0.1.0",
+    "@types/node": "^24.12.3",
+    "funcgo": "^0.1.2",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}

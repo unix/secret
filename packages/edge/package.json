@@ -1,0 +1,27 @@
+{
+  "name": "@secret-next/edge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 3001",
+    "deploy": "wrangler deploy --minify",
+    "db:apply": "wrangler d1 execute secret-next --remote --file schema.sql",
+    "db:migrate": "wrangler d1 migrations apply secret-next --remote",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "prettier": "@norehq/prettier",
+  "dependencies": {
+    "hono": "^4.12.23",
+    "secret-cipher": "^0.1.1"
+  },
+  "devDependencies": {
+    "@norehq/prettier": "^0.1.0",
+    "@types/node": "^24.12.3",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.4.0"
+  }
+}

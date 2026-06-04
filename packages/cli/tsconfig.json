@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "module": "commonjs",
+    "target": "esnext",
+    "lib": ["es2022"],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "files": ["src/index.ts"],
+  "exclude": ["node_modules", "examples", "dist"]
+}

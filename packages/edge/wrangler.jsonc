@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "secret-edge",
+  "routes": [
+    {
+      "pattern": "secret-api.witt.im",
+      "custom_domain": true
+    }
+  ],
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "triggers": {
+    "crons": ["0 0 * * *"],
+  },
+  "secrets": {
+    "required": [
+      "R2_ACCOUNT_ID",
+      "R2_ACCESS_KEY_ID",
+      "R2_SECRET_ACCESS_KEY",
+      "R2_BUCKET_NAME",
+    ],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "secret-next",
+      "database_id": "6eb1ce91-14ad-4547-8815-28dcf8a72521",
+      "remote": true,
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "secret-next",
+      "remote": true,
+    },
+  ],
+}

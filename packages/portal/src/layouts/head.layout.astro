@@ -1,0 +1,29 @@
+---
+import '@/styles/global.css'
+
+interface Props {
+  title?: string | undefined
+  description?: string | undefined
+}
+
+const {
+  title = 'Secret - sharing and safer sharing',
+  description = 'Secret will protect you when sharing information, you can use it to send text without worrying about hijacked.',
+} = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

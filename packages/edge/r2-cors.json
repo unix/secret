@@ -1,0 +1,26 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "http://localhost:4321",
+          "http://localhost:3000",
+          "https://secret.witt.im"
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "PUT"
+        ],
+        "headers": [
+          "Content-Type"
+        ]
+      },
+      "exposeHeaders": [
+        "Content-Length",
+        "ETag"
+      ],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

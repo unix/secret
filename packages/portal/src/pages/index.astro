@@ -1,0 +1,125 @@
+---
+import startNowIcon from '@/assets/icons/sent.svg?raw'
+import commandLineIcon from '@/assets/icons/command-line.svg?raw'
+import githubIcon from '@/assets/icons/github.svg?raw'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import HeadLayout from '@/layouts/head.layout.astro'
+---
+
+<HeadLayout>
+  <main
+    class="min-h-svh bg-white text-zinc-950 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px]">
+    <SecretHeader />
+
+    <section
+      class="mx-auto flex min-h-[548px] w-full max-w-7xl flex-col justify-between px-9 md:px-18">
+      <div
+        class="mx-auto flex w-full max-w-2xl flex-col items-center pt-38 text-center max-[480px]:max-w-71 md:pt-44">
+        <h1
+          aria-label="SECRET"
+          class="text-5xl leading-none font-semibold text-zinc-950">
+          <span aria-hidden="true" data-binary-title data-binary-value="SECRET">SECRET</span>
+        </h1>
+        <p
+          class="mt-7 w-full max-w-2xl text-sm leading-6 font-normal text-zinc-600 md:text-base md:leading-7">
+          Secret will protect you when sharing information, you can use it to
+          send<br />
+          text without worrying about hijacked. For more, refer to
+          <a
+            href="/features"
+            class="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-950">Introduction</a>.
+        </p>
+        <div
+          class="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-xs font-medium text-zinc-500">
+          <a
+            href="https://github.com/unix/secret"
+            target="_blank"
+            rel="noreferrer"
+            class="inline-flex items-center gap-1.5 transition-colors hover:text-zinc-900 [&_svg]:size-3.5">
+            <Fragment set:html={githubIcon} />
+            <span>Open Source</span>
+          </a>
+          <a
+            href="https://github.com/unix/secret#how-to-use"
+            target="_blank"
+            rel="noreferrer"
+            class="inline-flex items-center gap-1.5 transition-colors hover:text-zinc-900 [&_svg]:size-3.5">
+            <Fragment set:html={commandLineIcon} />
+            <span>Command Line</span>
+          </a>
+        </div>
+      </div>
+
+      <a
+        href="/go"
+        class="mx-auto mb-px inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none [&_svg]:size-4">
+        <span>Start Now</span>
+        <Fragment set:html={startNowIcon} />
+      </a>
+    </section>
+  </main>
+
+  <script is:inline>
+    const title = document.querySelector('[data-binary-title]')
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+
+    if (title && !prefersReducedMotion) {
+      const value = title.dataset.binaryValue ?? title.textContent ?? ''
+      const frames = 16
+      const frameDuration = 42
+      let frameTimer = 0
+
+      const randomBit = () => (Math.random() > 0.5 ? '1' : '0')
+
+      const shuffledIndexes = () => {
+        const indexes = [...value]
+          .map((character, index) => (character === ' ' ? -1 : index))
+          .filter(index => index >= 0)
+
+        for (let index = indexes.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1))
+          const swapValue = indexes[index]
+          indexes[index] = indexes[swapIndex]
+          indexes[swapIndex] = swapValue
+        }
+
+        return indexes
+      }
+
+      const renderFrame = (frame, revealOrder) => {
+        const revealCount = Math.ceil((frame / frames) * revealOrder.length)
+        const revealedIndexes = new Set(revealOrder.slice(0, revealCount))
+        title.textContent = [...value]
+          .map((character, index) => {
+            if (character === ' ' || revealedIndexes.has(index)) return character
+
+            return randomBit()
+          })
+          .join('')
+      }
+
+      const playBinaryTitle = () => {
+        window.clearInterval(frameTimer)
+
+        let frame = 0
+        const revealOrder = shuffledIndexes()
+        renderFrame(frame, revealOrder)
+
+        frameTimer = window.setInterval(() => {
+          frame += 1
+          renderFrame(frame, revealOrder)
+
+          if (frame < frames) return
+
+          window.clearInterval(frameTimer)
+          title.textContent = value
+        }, frameDuration)
+      }
+
+      playBinaryTitle()
+      title.addEventListener('mouseenter', playBinaryTitle)
+    }
+  </script>
+</HeadLayout>

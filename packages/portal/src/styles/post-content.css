@@ -1,0 +1,149 @@
+@layer components {
+  .post-content {
+    @apply text-zinc-800;
+    font-size: 1rem;
+    line-height: 1.625;
+    letter-spacing: 0;
+  }
+
+  .post-content > :first-child {
+    margin-top: 0;
+  }
+
+  .post-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  .post-content :where(h1, h2, h3, h4, h5, h6) {
+    @apply scroll-m-20 text-zinc-950;
+    letter-spacing: 0;
+  }
+
+  .post-content h1 {
+    @apply mt-4.5 mb-3 pb-1 font-semibold;
+    font-size: 1.4rem;
+    line-height: 1.4;
+  }
+
+  .post-content h2 {
+    @apply mt-4 mb-2 font-semibold;
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  .post-content h3 {
+    @apply mt-4 mb-2 font-medium;
+    font-size: 1.05rem;
+    line-height: 1.1;
+  }
+
+  .post-content :where(h4, h5, h6) {
+    @apply mt-4 mb-2 font-medium;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .post-content p {
+    @apply mb-[0.81em];
+    font-size: 1rem;
+    line-height: 1.625;
+    letter-spacing: 0;
+  }
+
+  .post-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .post-content :where(h1, h2, h3, h4, h5, h6) + :where(h1, h2, h3, h4, h5, h6) {
+    margin-top: 0.45em;
+  }
+
+  .post-content :where(h1, h2, h3, h4, h5, h6) + :where(p, ul, ol, blockquote, pre) {
+    margin-top: 0;
+  }
+
+  .post-content :where(p, ul, ol, blockquote, pre) + :where(h1, h2, h3, h4, h5, h6) {
+    margin-top: 1rem;
+  }
+
+  .post-content
+    :where(h1, h2, h3, h4, h5, h6):has(+ :where(h1, h2, h3, h4, h5, h6)) {
+    margin-bottom: 0.25em;
+  }
+
+  .post-content a {
+    @apply font-medium underline decoration-zinc-400 decoration-dashed underline-offset-4 transition-colors hover:text-violet-600 hover:decoration-violet-600;
+  }
+
+  .post-content a u {
+    @apply decoration-zinc-400 decoration-dashed underline-offset-4;
+    text-decoration-line: inherit;
+    text-decoration-thickness: inherit;
+  }
+
+  .post-content strong {
+    @apply font-semibold text-zinc-900;
+  }
+
+  .post-content em {
+    @apply text-zinc-700;
+  }
+
+  .post-content s {
+    @apply text-zinc-500 decoration-zinc-500;
+  }
+
+  .post-content code {
+    @apply rounded bg-zinc-100 px-1.5 py-0.5 text-sm font-medium text-zinc-800;
+    margin: 0 3px;
+    padding-inline: 2px 3px;
+  }
+
+  .post-content pre {
+    @apply my-6 overflow-x-auto rounded-md border border-zinc-100 bg-zinc-50/75 p-4;
+  }
+
+  .post-content pre code {
+    @apply block rounded-none bg-transparent p-0 font-mono text-sm leading-normal font-normal;
+    margin: 0;
+    padding-inline: 0;
+  }
+
+  .post-content blockquote {
+    @apply mt-6 border-l-2 pl-6 italic mb-4;
+  }
+
+  .post-content ul {
+    @apply my-6 ml-6 list-disc;
+  }
+
+  .post-content ol {
+    @apply my-6 ml-6 list-decimal;
+  }
+
+  .post-content li {
+    @apply mt-2;
+  }
+
+  .post-content img {
+    @apply mx-auto my-6 max-w-full rounded-md;
+    width: 65%;
+  }
+
+  .post-content figure[data-type='image-figure'] {
+    @apply mx-auto my-6 max-w-full;
+    width: 65%;
+  }
+
+  .post-content figure[data-type='image-figure'] img {
+    @apply my-0 w-full rounded-md;
+  }
+
+  .post-content figure[data-type='image-figure'] figcaption {
+    @apply mt-2 min-h-6 text-center text-sm text-zinc-500 outline-none;
+  }
+
+  .post-content hr {
+    @apply mx-40 my-10 border-zinc-200;
+  }
+}

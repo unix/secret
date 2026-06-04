@@ -1,0 +1,24 @@
+---
+import SecretFooter from '@/components/astro/secret-footer.astro'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import SecretPageHero from '@/components/astro/secret-page-hero.astro'
+import { TrackSecretIsland } from '@/islands/track.island'
+import HeadLayout from '@/layouts/head.layout.astro'
+
+export const prerender = false
+
+const { trackId } = Astro.params
+---
+
+<HeadLayout title="Secret - Tracked">
+  <main
+    class="flex min-h-svh flex-col bg-white text-zinc-950 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px]">
+    <SecretHeader />
+    <SecretPageHero
+      title="Secret Tracked"
+      description="Everything is ready, here are all your available links."
+    />
+    <TrackSecretIsland trackId={trackId} client:only="react" />
+    <SecretFooter />
+  </main>
+</HeadLayout>
