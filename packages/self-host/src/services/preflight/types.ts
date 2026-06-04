@@ -1,4 +1,4 @@
-import type { EnvRecord, SelfHostConfig } from '@/types'
+import type { EnvRecord, SelfHostConfig } from '../../types'
 
 export type PreflightContext = {
   config?: SelfHostConfig

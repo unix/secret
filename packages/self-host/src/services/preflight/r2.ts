@@ -1,6 +1,5 @@
 import { createHash, createHmac } from 'node:crypto'
-
-import { SelfHostError } from '@/utils/errors'
+import { SelfHostError } from '../../utils/errors'
 import { requireEnv } from './env'
 import type { PreflightCheck } from './types'
 import { wranglerJson } from './wrangler'
@@ -30,7 +29,7 @@ export const r2Preflight: PreflightCheck = {
   },
 }
 
-async function assertR2Credentials(input: SignedR2Input): Promise<void> {
+const assertR2Credentials = async (input: SignedR2Input): Promise<void> => {
   const request = signedR2ListRequest(input)
   const response = await fetch(request.url, {
     headers: request.headers,
@@ -64,7 +63,7 @@ const signedR2ListRequest = ({
   const canonicalUri = `/${encodeURIComponent(bucketName)}`
   const canonicalQuery = 'list-type=2&max-keys=1'
   const payloadHash = sha256Hex('')
-  const headers = {
+  const headers: Record<string, string> = {
     host,
     'x-amz-content-sha256': payloadHash,
     'x-amz-date': amzDate,
@@ -72,7 +71,7 @@ const signedR2ListRequest = ({
   const signedHeaders = Object.keys(headers).sort().join(';')
   const canonicalHeaders = Object.keys(headers)
     .sort()
-    .map(key => `${key}:${headers[key as keyof typeof headers]}`)
+    .map(key => `${key}:${headers[key]}`)
     .join('\n')
   const canonicalRequest = [
     'GET',

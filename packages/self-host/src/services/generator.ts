@@ -1,8 +1,7 @@
 import { Service } from 'func'
-
-import { validateFileRules, writeFileRules } from '@/services/file-rules'
-import type { EnvRecord, SelfHostConfig } from '@/types'
-import { loading } from '@/utils/terminal'
+import { validateFileRules, writeFileRules } from './file-rules'
+import type { EnvRecord, SelfHostConfig } from '../types'
+import { loading } from '../utils/terminal'
 
 @Service()
 export class GeneratorService {

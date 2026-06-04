@@ -1,18 +1,43 @@
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 
-export const packageRoot = resolve(dirname(__dirname), '..')
-export const workspaceRoot = resolve(packageRoot, '..', '..')
+type ProjectPaths = {
+  readonly cliSelfHost: string
+  readonly edgeDevVars: string
+  readonly edgePackage: string
+  readonly edgeR2Cors: string
+  readonly edgeSelfHost: string
+  readonly edgeWrangler: string
+  readonly portalSelfHost: string
+  readonly portalWrangler: string
+  readonly rootEnv: string
+  readonly rootEnvExample: string
+  readonly rootWrangler: string
+  readonly secretConfig: string
+}
 
-export const paths = {
-  rootWrangler: join(workspaceRoot, 'node_modules', '.bin', 'wrangler'),
-  rootEnv: join(workspaceRoot, '.env'),
-  rootEnvExample: join(workspaceRoot, '.env.example'),
-  secretConfig: join(workspaceRoot, 'secret.config.json'),
-  cliSelfHost: join(workspaceRoot, 'packages', 'cli', 'self-host.ts'),
-  edgeDevVars: join(workspaceRoot, 'packages', 'edge', '.dev.vars'),
-  edgeR2Cors: join(workspaceRoot, 'packages', 'edge', 'r2-cors.json'),
-  edgeSelfHost: join(workspaceRoot, 'packages', 'edge', 'self-host.ts'),
-  edgeWrangler: join(workspaceRoot, 'packages', 'edge', 'wrangler.jsonc'),
-  portalSelfHost: join(workspaceRoot, 'packages', 'portal', 'self-host.ts'),
-  portalWrangler: join(workspaceRoot, 'packages', 'portal', 'wrangler.jsonc'),
+const createPaths = (root: string): ProjectPaths => {
+  const edgePackage = join(root, 'packages', 'edge')
+
+  return {
+    rootWrangler: join(root, 'node_modules', '.bin', 'wrangler'),
+    rootEnv: join(root, '.env'),
+    rootEnvExample: join(root, '.env.example'),
+    secretConfig: join(root, 'secret.config.json'),
+    cliSelfHost: join(root, 'packages', 'cli', 'self-host.ts'),
+    edgePackage,
+    edgeDevVars: join(edgePackage, '.dev.vars'),
+    edgeR2Cors: join(edgePackage, 'r2-cors.json'),
+    edgeSelfHost: join(edgePackage, 'self-host.ts'),
+    edgeWrangler: join(edgePackage, 'wrangler.jsonc'),
+    portalSelfHost: join(root, 'packages', 'portal', 'self-host.ts'),
+    portalWrangler: join(root, 'packages', 'portal', 'wrangler.jsonc'),
+  }
+}
+
+export let projectRoot = resolve(process.cwd())
+export let paths = createPaths(projectRoot)
+
+export const configureProjectRoot = (root: string): void => {
+  projectRoot = resolve(root)
+  paths = createPaths(projectRoot)
 }

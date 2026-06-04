@@ -1,4 +1,4 @@
-import { SelfHostError } from '@/utils/errors'
+import { SelfHostError } from '../../utils/errors'
 import { requireConfig } from './config'
 import type { PreflightCheck } from './types'
 
@@ -30,21 +30,34 @@ export const limitsPreflight: PreflightCheck = {
       limits.CLIENT_VALID_LINK_COUNTS,
       'CLIENT_VALID_LINK_COUNTS',
     )
-    const maxTtl = limits.HYBRID_MAX_SECRET_TTL_SECONDS as number
-    const maxReads = limits.HYBRID_MAX_READS as number
+    const maxTtl = assertPositiveNumber(
+      limits.HYBRID_MAX_SECRET_TTL_SECONDS,
+      'HYBRID_MAX_SECRET_TTL_SECONDS',
+    )
+    const maxReads = assertPositiveNumber(
+      limits.HYBRID_MAX_READS,
+      'HYBRID_MAX_READS',
+    )
 
     assertMax(expirations, maxTtl, 'CLIENT_VALID_EXPIRATIONS_SECONDS')
     assertMax(linkCounts, maxReads, 'CLIENT_VALID_LINK_COUNTS')
   },
 }
 
-function assertPositiveNumber(value: unknown, key: string): void {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return
+const assertPositiveNumber = (value: unknown, key: string): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return value
+  }
 
-  throw new SelfHostError(`secret.config.json limits.${key} must be a positive number.`)
+  throw new SelfHostError(
+    `secret.config.json limits.${key} must be a positive number.`,
+  )
 }
 
-function assertPositiveNumberArray(value: unknown, key: string): readonly number[] {
+const assertPositiveNumberArray = (
+  value: unknown,
+  key: string,
+): readonly number[] => {
   if (
     Array.isArray(value) &&
     value.length > 0 &&
@@ -60,7 +73,7 @@ function assertPositiveNumberArray(value: unknown, key: string): readonly number
   )
 }
 
-function assertMax(values: readonly number[], max: number, key: string): void {
+const assertMax = (values: readonly number[], max: number, key: string): void => {
   const actual = Math.max(...values)
   if (actual <= max) return
 

@@ -1,10 +1,9 @@
 import { execFile } from 'node:child_process'
 import { access } from 'node:fs/promises'
 import { promisify } from 'node:util'
-
-import type { EnvRecord } from '@/types'
-import { SelfHostError } from '@/utils/errors'
-import { paths, workspaceRoot } from '@/utils/paths'
+import type { EnvRecord } from '../../types'
+import { SelfHostError } from '../../utils/errors'
+import { paths, projectRoot } from '../../utils/paths'
 import type { PreflightCheck } from './types'
 
 const execFileAsync = promisify(execFile)
@@ -38,7 +37,7 @@ export const wranglerJson = async (
   let stdout: string
   try {
     const result = await execFileAsync(paths.rootWrangler, args, {
-      cwd: workspaceRoot,
+      cwd: projectRoot,
       env: {
         ...process.env,
         ...accountEnv(env),
@@ -73,7 +72,7 @@ const accountEnv = (
   return { CLOUDFLARE_ACCOUNT_ID: env.R2_ACCOUNT_ID }
 }
 
-async function assertWranglerInstalled(): Promise<void> {
+const assertWranglerInstalled = async (): Promise<void> => {
   try {
     await access(paths.rootWrangler)
   } catch {

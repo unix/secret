@@ -1,8 +1,7 @@
 import { readFile } from 'node:fs/promises'
-
-import type { SelfHostConfig } from '@/types'
-import { SelfHostError } from '@/utils/errors'
-import { paths } from '@/utils/paths'
+import type { SelfHostConfig } from '../../types'
+import { SelfHostError } from '../../utils/errors'
+import { paths } from '../../utils/paths'
 import type { PreflightCheck, PreflightContext } from './types'
 
 export const configPreflight: PreflightCheck = {
@@ -15,10 +14,12 @@ export const configPreflight: PreflightCheck = {
 export const requireConfig = (context: PreflightContext): SelfHostConfig => {
   if (context.config) return context.config
 
-  throw new SelfHostError('Preflight order error: secret.config.json is not loaded yet.')
+  throw new SelfHostError(
+    'Preflight order error: secret.config.json is not loaded yet.',
+  )
 }
 
-async function readConfig(): Promise<SelfHostConfig> {
+const readConfig = async (): Promise<SelfHostConfig> => {
   let parsed: unknown
   try {
     parsed = JSON.parse(await readFile(paths.secretConfig, 'utf8'))
@@ -38,24 +39,22 @@ async function readConfig(): Promise<SelfHostConfig> {
 }
 
 const isSelfHostConfig = (value: unknown): value is SelfHostConfig => {
-  if (!value || typeof value !== 'object') return false
-
-  const record = value as Record<string, unknown>
+  if (!isRecord(value)) return false
 
   return (
-    typeof record.schemaVersion === 'number' &&
-    isConfigSection(record.portal) &&
-    isConfigSection(record.edge) &&
-    Boolean(record.limits) &&
-    typeof record.limits === 'object'
+    typeof value.schemaVersion === 'number' &&
+    isConfigSection(value.portal) &&
+    isConfigSection(value.edge) &&
+    isRecord(value.limits)
   )
 }
 
 const isConfigSection = (value: unknown): value is SelfHostConfig['portal'] => {
-  return (
-    Boolean(value) &&
-    typeof value === 'object' &&
-    typeof (value as { origin?: unknown }).origin === 'string' &&
-    typeof (value as { workerName?: unknown }).workerName === 'string'
-  )
+  if (!isRecord(value)) return false
+
+  return typeof value.origin === 'string' && typeof value.workerName === 'string'
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
 }

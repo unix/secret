@@ -1,10 +1,8 @@
 import { writeFile } from 'node:fs/promises'
-
 import { applyEdits, modify } from 'jsonc-parser'
-
-import type { SECRET_ENV } from '@/types'
-import { SelfHostError } from '@/utils/errors'
-import { paths } from '@/utils/paths'
+import type { SECRET_ENV } from '../../types'
+import { SelfHostError } from '../../utils/errors'
+import { paths } from '../../utils/paths'
 import type { FileRule } from './types'
 import { assertFileExists, parseJsoncFile, readExistingFile } from './utils'
 
@@ -31,12 +29,7 @@ type CustomDomainRoute = {
 
 type WorkerProject = 'edge' | 'portal'
 
-export const wranglerJsoncRules: readonly FileRule[] = [
-  edgeWranglerJsoncRule(),
-  portalWranglerJsoncRule(),
-]
-
-function edgeWranglerJsoncRule(): FileRule {
+const edgeWranglerJsoncRule = (): FileRule => {
   return {
     label: EDGE_LABEL,
     path: paths.edgeWrangler,
@@ -53,7 +46,7 @@ function edgeWranglerJsoncRule(): FileRule {
   }
 }
 
-function portalWranglerJsoncRule(): FileRule {
+const portalWranglerJsoncRule = (): FileRule => {
   return {
     label: PORTAL_LABEL,
     path: paths.portalWrangler,
@@ -68,9 +61,12 @@ function portalWranglerJsoncRule(): FileRule {
   }
 }
 
-async function writeEdgeWrangler(secretEnv: SECRET_ENV): Promise<void> {
+const writeEdgeWrangler = async (secretEnv: SECRET_ENV): Promise<void> => {
   const contents = await readExistingFile(paths.edgeWrangler, EDGE_LABEL)
-  const config = parseJsoncFile<WranglerConfig>(contents, EDGE_LABEL)
+  const config = wranglerConfigFromValue(
+    parseJsoncFile(contents, EDGE_LABEL),
+    EDGE_LABEL,
+  )
   const d1Index = bindingIndex(config.d1_databases, 'DB', 'd1_databases', EDGE_LABEL)
   const r2Index = bindingIndex(config.r2_buckets, 'FILES', 'r2_buckets', EDGE_LABEL)
   const next = applyModification(
@@ -94,7 +90,7 @@ async function writeEdgeWrangler(secretEnv: SECRET_ENV): Promise<void> {
   await writeFile(paths.edgeWrangler, next, 'utf8')
 }
 
-async function writePortalWrangler(secretEnv: SECRET_ENV): Promise<void> {
+const writePortalWrangler = async (secretEnv: SECRET_ENV): Promise<void> => {
   const contents = await readExistingFile(paths.portalWrangler, PORTAL_LABEL)
   const next = applyModification(
     applyModification(contents, ['name'], workerName(secretEnv, 'portal')),
@@ -105,11 +101,23 @@ async function writePortalWrangler(secretEnv: SECRET_ENV): Promise<void> {
   await writeFile(paths.portalWrangler, next, 'utf8')
 }
 
-async function wranglerConfig(path: string, label: string): Promise<WranglerConfig> {
-  return parseJsoncFile<WranglerConfig>(await readExistingFile(path, label), label)
+const wranglerConfig = async (
+  path: string,
+  label: string,
+): Promise<WranglerConfig> => {
+  return wranglerConfigFromValue(
+    parseJsoncFile(await readExistingFile(path, label), label),
+    label,
+  )
 }
 
-function validateWorkerConfig(config: WranglerConfig, label: string): void {
+const wranglerConfigFromValue = (value: unknown, label: string): WranglerConfig => {
+  if (value !== null && typeof value === 'object') return value
+
+  throw new SelfHostError(`${label} must be a JSON object.`)
+}
+
+const validateWorkerConfig = (config: WranglerConfig, label: string): void => {
   if (typeof config.name !== 'string') {
     throw new SelfHostError(`${label} must include a string name.`)
   }
@@ -118,12 +126,12 @@ function validateWorkerConfig(config: WranglerConfig, label: string): void {
   throw new SelfHostError(`${label} routes must be an array when provided.`)
 }
 
-function bindingIndex(
+const bindingIndex = (
   bindings: readonly WranglerBinding[] | undefined,
   binding: string,
   section: string,
   label: string,
-): number {
+): number => {
   if (!Array.isArray(bindings)) {
     throw new SelfHostError(`${label} must include a ${section} array.`)
   }
@@ -134,7 +142,7 @@ function bindingIndex(
   throw new SelfHostError(`${label} ${section} is missing the ${binding} binding.`)
 }
 
-function workerName(secretEnv: SECRET_ENV, project: WorkerProject): string {
+const workerName = (secretEnv: SECRET_ENV, project: WorkerProject): string => {
   const name = secretEnv.config[project].workerName
   if (WORKER_NAME_PATTERN.test(name)) return name
 
@@ -143,10 +151,10 @@ function workerName(secretEnv: SECRET_ENV, project: WorkerProject): string {
   )
 }
 
-function customDomainRoutes(
+const customDomainRoutes = (
   secretEnv: SECRET_ENV,
   project: WorkerProject,
-): readonly CustomDomainRoute[] {
+): readonly CustomDomainRoute[] => {
   return [
     {
       pattern: new URL(secretEnv.config[project].origin).hostname,
@@ -155,11 +163,11 @@ function customDomainRoutes(
   ]
 }
 
-function applyModification(
+const applyModification = (
   contents: string,
   path: readonly (number | string)[],
   value: unknown,
-): string {
+): string => {
   const edits = modify(contents, [...path], value, {
     formattingOptions: {
       insertSpaces: true,
@@ -169,3 +177,8 @@ function applyModification(
 
   return applyEdits(contents, edits)
 }
+
+export const wranglerJsoncRules: readonly FileRule[] = [
+  edgeWranglerJsoncRule(),
+  portalWranglerJsoncRule(),
+]

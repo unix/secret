@@ -1,6 +1,5 @@
 import { CommandMajor, Handler } from 'func'
-
-import { SelfHostService } from '@/services/self-host'
+import { SelfHostService } from '../services/self-host'
 
 @CommandMajor()
 export class Major {

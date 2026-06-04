@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises'
-
-import type { EnvRecord } from '@/types'
+import type { EnvRecord } from '../types'
 
 const ENV_LINE_PATTERN = /^([\w.-]+)\s*=\s*(.*)$/
 

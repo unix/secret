@@ -1,4 +1,4 @@
-import { SelfHostError } from '@/utils/errors'
+import { SelfHostError } from '../../utils/errors'
 import { requireEnv } from './env'
 import type { PreflightCheck } from './types'
 import { wranglerJson } from './wrangler'
@@ -32,12 +32,15 @@ export const d1Preflight: PreflightCheck = {
 }
 
 const stringValue = (value: unknown, keys: readonly string[]): string | null => {
-  if (!value || typeof value !== 'object') return null
+  if (!isRecord(value)) return null
 
-  const record = value as Record<string, unknown>
   for (const key of keys) {
-    if (typeof record[key] === 'string') return record[key]
+    if (typeof value[key] === 'string') return value[key]
   }
 
   return null
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
 }

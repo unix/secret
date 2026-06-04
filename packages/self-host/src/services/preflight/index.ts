@@ -1,7 +1,6 @@
 import { Service } from 'func'
-
-import type { EnvRecord, SelfHostConfig } from '@/types'
-import { loading } from '@/utils/terminal'
+import type { EnvRecord, SelfHostConfig } from '../../types'
+import { loading } from '../../utils/terminal'
 import { configPreflight, requireConfig } from './config'
 import { d1Preflight } from './d1'
 import { envPreflight, requireEnv } from './env'
@@ -53,12 +52,12 @@ export class PreflightService {
   }
 }
 
-async function runChecks(
+const runChecks = async (
   text: string,
   successText: string,
   context: PreflightContext,
   checks: readonly PreflightCheck[],
-): Promise<void> {
+): Promise<void> => {
   const task = loading(text)
   try {
     for (const check of checks) {

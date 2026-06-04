@@ -1,9 +1,8 @@
 import { access } from 'node:fs/promises'
-
-import type { EnvRecord } from '@/types'
-import { missingEnvKeys, readEnvFile } from '@/utils/env'
-import { SelfHostError } from '@/utils/errors'
-import { paths } from '@/utils/paths'
+import type { EnvRecord } from '../../types'
+import { missingEnvKeys, readEnvFile } from '../../utils/env'
+import { SelfHostError } from '../../utils/errors'
+import { paths } from '../../utils/paths'
 import type { PreflightCheck, PreflightContext } from './types'
 
 const REQUIRED_ENV_KEYS = [
@@ -31,7 +30,7 @@ export const requireEnv = (context: PreflightContext): EnvRecord => {
   throw new SelfHostError('Preflight order error: env is not loaded yet.')
 }
 
-async function assertEnvFile(): Promise<void> {
+const assertEnvFile = async (): Promise<void> => {
   try {
     await access(paths.rootEnv)
   } catch {
@@ -41,7 +40,7 @@ async function assertEnvFile(): Promise<void> {
   }
 }
 
-function assertEnvComplete(env: EnvRecord): void {
+const assertEnvComplete = (env: EnvRecord): void => {
   const missing = missingEnvKeys(env, REQUIRED_ENV_KEYS)
   if (missing.length === 0) return
 

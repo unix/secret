@@ -1,9 +1,8 @@
 import { writeFile } from 'node:fs/promises'
-
-import type { GeneratedProject, SECRET_ENV } from '@/types'
-import { SelfHostError } from '@/utils/errors'
-import { generatedSelfHostFile } from '@/utils/generated'
-import { paths } from '@/utils/paths'
+import type { GeneratedProject, SECRET_ENV } from '../../types'
+import { SelfHostError } from '../../utils/errors'
+import { generatedSelfHostFile } from '../../utils/generated'
+import { paths } from '../../utils/paths'
 import type { FileRule } from './types'
 import { parseJsonFile, readOptionalFile } from './utils'
 
@@ -14,6 +13,34 @@ type SelfHostRuleInput = {
   readonly label: string
   readonly path: string
   readonly project: GeneratedProject
+}
+
+const selfHostRule = ({ label, path, project }: SelfHostRuleInput): FileRule => {
+  return {
+    label,
+    path,
+    validateParse: async () => {
+      const contents = await readOptionalFile(path)
+      if (contents === null) return
+
+      parseSelfHost(contents, label)
+    },
+    validateTarget: async () => {
+      return
+    },
+    write: async (secretEnv: SECRET_ENV) => {
+      await writeFile(path, generatedSelfHostFile(project, secretEnv.config), 'utf8')
+    },
+  }
+}
+
+const parseSelfHost = (contents: string, label: string): void => {
+  const match = contents.match(SELF_HOST_EXPORT_PATTERN)
+  if (!match) {
+    throw new SelfHostError(`${label} does not have a readable selfHost export.`)
+  }
+
+  parseJsonFile(match[1], label)
 }
 
 export const selfHostRules: readonly FileRule[] = [
@@ -33,31 +60,3 @@ export const selfHostRules: readonly FileRule[] = [
     project: 'portal',
   }),
 ]
-
-function selfHostRule({ label, path, project }: SelfHostRuleInput): FileRule {
-  return {
-    label,
-    path,
-    validateParse: async () => {
-      const contents = await readOptionalFile(path)
-      if (contents === null) return
-
-      parseSelfHost(contents, label)
-    },
-    validateTarget: async () => {
-      return
-    },
-    write: async (secretEnv: SECRET_ENV) => {
-      await writeFile(path, generatedSelfHostFile(project, secretEnv.config), 'utf8')
-    },
-  }
-}
-
-function parseSelfHost(contents: string, label: string): void {
-  const match = contents.match(SELF_HOST_EXPORT_PATTERN)
-  if (!match) {
-    throw new SelfHostError(`${label} does not have a readable selfHost export.`)
-  }
-
-  parseJsonFile(match[1], label)
-}

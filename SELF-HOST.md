@@ -16,24 +16,30 @@ Follow this sequence to deploy your own instance:
    - Start with the [required `.env` variables](#required-environment-variables) for your Cloudflare account, R2 credentials, and D1 database.
 
    - Create or choose the R2 bucket and D1 database, then copy their names, IDs, and access keys into `.env`.
-   - Confirm the client and API domains in `secret.config.json`, set any deployment limits, and add your client domain to the R2 bucket's CORS configuration.
+   - Confirm the client and API domains in `secret.config.json`, and set any deployment limits.
 
 3. Run the setup command to check the provided configuration and provision any required deployment resources:
 
    ```sh
-   pnpm deploy:setup
+   pnpm release:setup
    ```
+
+   The setup command generates the deployment files and applies the R2 bucket
+   CORS policy automatically. The policy keeps localhost development origins and
+   adds the configured `portal.origin` from `secret.config.json`. If CORS
+   configuration fails, the setup command stops so you can fix the Wrangler
+   session, Cloudflare account, or R2 bucket configuration before deploying.
 
 4. Deploy the server-side Workers:
 
    ```sh
-   pnpm deploy:edge
+   pnpm release:edge
    ```
 
 5. Deploy the client portal:
 
    ```sh
-   pnpm deploy:portal
+   pnpm release:portal
    ```
 
    If the domains configured in `secret.config.json` are already managed by Cloudflare and have no conflicting DNS records, the deployment is complete at this point. The generated `wrangler.jsonc` files include the configured domains as Worker custom domains.
@@ -74,7 +80,8 @@ For example, if the largest value in `CLIENT_VALID_EXPIRATIONS_SECONDS` is great
 
 ## Generate Configuration
 
-The self-host package generates the deployment configuration:
+The self-host package generates the deployment configuration and applies the R2
+bucket CORS policy:
 
 ```sh
 pnpm install

@@ -1,4 +1,4 @@
-import type { SECRET_ENV } from '@/types'
+import type { SECRET_ENV } from '../../types'
 import { devVarsRule } from './dev-vars'
 import { r2CorsJsonRule } from './r2-cors.json'
 import { selfHostRules } from './self-host'

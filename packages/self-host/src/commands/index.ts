@@ -1,3 +1,3 @@
-import { Major } from '@/commands/major'
+import { Major } from './major'
 
 export const commands = [Major]

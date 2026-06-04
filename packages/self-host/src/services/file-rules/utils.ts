@@ -1,8 +1,6 @@
 import { access, readFile } from 'node:fs/promises'
-
 import { parse as parseJsonc, type ParseError } from 'jsonc-parser'
-
-import { SelfHostError } from '@/utils/errors'
+import { SelfHostError } from '../../utils/errors'
 
 export const assertFileExists = async (
   path: string,
@@ -36,9 +34,9 @@ export const readOptionalFile = async (path: string): Promise<string | null> => 
   }
 }
 
-export const parseJsonFile = <T>(contents: string, label: string): T => {
+export const parseJsonFile = (contents: string, label: string): unknown => {
   try {
-    return JSON.parse(contents) as T
+    return JSON.parse(contents)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
 
@@ -46,7 +44,7 @@ export const parseJsonFile = <T>(contents: string, label: string): T => {
   }
 }
 
-export const parseJsoncFile = <T>(contents: string, label: string): T => {
+export const parseJsoncFile = (contents: string, label: string): unknown => {
   const errors: ParseError[] = []
   const parsed = parseJsonc(contents, errors, { allowTrailingComma: true })
   if (errors.length > 0) {
@@ -55,7 +53,7 @@ export const parseJsoncFile = <T>(contents: string, label: string): T => {
     )
   }
 
-  return parsed as T
+  return parsed
 }
 
 const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {

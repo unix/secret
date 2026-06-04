@@ -1,4 +1,4 @@
-import { SelfHostError } from '@/utils/errors'
+import { SelfHostError } from '../../utils/errors'
 import { requireConfig } from './config'
 import type { PreflightCheck } from './types'
 

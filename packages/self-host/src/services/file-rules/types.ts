@@ -1,4 +1,4 @@
-import type { SECRET_ENV } from '@/types'
+import type { SECRET_ENV } from '../../types'
 
 export type FileRule = {
   readonly actionLabel?: string

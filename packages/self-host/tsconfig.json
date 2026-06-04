@@ -3,11 +3,8 @@
     "moduleResolution": "node",
     "ignoreDeprecations": "6.0",
     "module": "commonjs",
+    "rootDir": "src",
     "target": "esnext",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "lib": ["es2022", "dom"],
     "types": ["node"],
     "esModuleInterop": true,
