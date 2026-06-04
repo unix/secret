@@ -27,6 +27,7 @@ const OPENING_TEXT = 'Opening Secret...'
 const DECRYPTION_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+-?'
 const DECRYPTION_STEPS = 12
 const USED_SECRET_ERROR = 'Secret link has already been used.'
+const EXPIRED_SECRET_ERROR = 'Secret has expired.'
 
 type OpenedSecret =
   | {
@@ -118,6 +119,10 @@ const formatFileMeta = (manifest: FileManifest): string => {
   }
 
   return parts.join(' · ')
+}
+
+const isUnavailableSecretError = (message: string): boolean => {
+  return message === USED_SECRET_ERROR || message === EXPIRED_SECRET_ERROR
 }
 
 const RevealSecretButton = ({
@@ -343,7 +348,7 @@ const OpenedFileSecret = ({
       const message =
         error instanceof Error ? error.message : 'Unable to download file.'
       onStatus(message)
-      if (message === USED_SECRET_ERROR) {
+      if (isUnavailableSecretError(message)) {
         onUsed()
       }
     } finally {
@@ -448,7 +453,7 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
       const message =
         error instanceof Error ? error.message : 'Unable to open secret.'
       setStatus(message)
-      setUsed(message === USED_SECRET_ERROR)
+      setUsed(isUnavailableSecretError(message))
     } finally {
       setBusy(false)
     }
