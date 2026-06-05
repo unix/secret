@@ -12,16 +12,16 @@
     "format:check": "prettier --check .",
     "typegen": "wrangler types --env-interface CloudflareBindings"
   },
-  "prettier": "@norehq/prettier",
+  "prettier": "@unix/prettier",
   "dependencies": {
     "hono": "^4.12.23",
     "secret-cipher": "^0.1.1"
   },
   "devDependencies": {
-    "@norehq/prettier": "^0.1.0",
-    "@types/node": "^24.12.3",
+    "@types/node": "^24.12.4",
+    "@unix/prettier": "^0.1.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.97.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "secret-cipher",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,13 +26,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "release": "pnpm build && pnpm publish --access public --no-git-checks"
   },
-  "prettier": "@norehq/prettier",
+  "prettier": "@unix/prettier",
   "devDependencies": {
-    "@norehq/prettier": "^0.1.0",
-    "@types/node": "^24.12.3",
+    "@types/node": "^24.12.4",
+    "@unix/prettier": "^0.1.0",
     "prettier": "^3.8.3",
-    "typescript": "~6.0.2",
-    "vite": "^8.0.12",
-    "vitest": "^4.1.7"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
   }
 }
