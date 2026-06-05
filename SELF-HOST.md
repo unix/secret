@@ -45,6 +45,33 @@ Follow this sequence to deploy your own instance:
 
    If a configured domain is not managed by Cloudflare, or if it previously had another DNS record, configure the Worker domains manually in the Cloudflare Dashboard. Advanced setups can also use your own proxy, routing rules, or forwarding rules.
 
+## Cost Estimate
+
+Cloudflare pricing can change, so use the official Cloudflare pricing pages as the source of truth: [Cloudflare Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Cloudflare D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/), and [Cloudflare R2 pricing](https://developers.cloudflare.com/r2/pricing/). The estimate below is based on the default project limits and a typical "create one secret, then read it once" interaction.
+
+Assumptions:
+
+- A text-secret interaction normally uses 2 API Worker requests and D1 for metadata, read tokens, consumption state, destroy state, and cleanup.
+- A file-secret interaction normally uses 4 API Worker requests, plus R2 for the encrypted file object. Browser uploads go directly to R2, so the upload itself is not a Worker request, but it is still an R2 operation.
+- D1 usage is estimated as application-level row activity. Cloudflare's billable row metrics may be higher when indexes are updated, so use the Cloudflare dashboard or D1 query metadata for exact production numbers.
+- File storage assumes R2 Standard storage and the default maximum retained lifetime of about 25 hours: up to 1 hour from `HYBRID_MAX_SECRET_TTL_SECONDS`, plus 24 hours from `API_TRACKING_TTL_SECONDS`.
+- Portal static asset requests are normally free. Requests that invoke Worker code, SSR, or API routes count as Workers requests.
+
+| Monthly interactions | Average interactions per day | Estimated usage | Recommended tier |
+| -------------------: | ---------------------------: | --------------- | ---------------- |
+| 1,000                | About 34                     | Even if every interaction is a file secret, usage is roughly 4,000 Worker requests, 1,000 R2 Class A operations, and 2,000 R2 Class B operations. | Workers Free is usually enough. D1 and R2 should normally remain within included free usage. |
+| 10,000               | About 334                    | In an all-file scenario, usage is roughly 40,000 Worker requests, 10,000 R2 Class A operations, and 20,000 R2 Class B operations. | Workers Free is usually enough. R2 operations are well within the free tier, and storage is usually within or near the free tier unless files are large and retained close to the maximum lifetime. |
+| 100,000              | About 3,334                  | Text-heavy usage is roughly 200,000 Worker requests. All-file usage is roughly 400,000 Worker requests, 100,000 R2 Class A operations, and 200,000 R2 Class B operations. | Workers Free is still usually viable. D1 writes are the main number to watch, but this volume is normally below the Free daily limits when traffic is evenly distributed. |
+| 1,000,000            | About 33,334                 | Text-heavy usage is roughly 2,000,000 Worker requests. All-file usage is roughly 4,000,000 Worker requests, 1,000,000 R2 Class A operations, and 2,000,000 R2 Class B operations. | Plan for Workers Paid. The main reason is D1 Free's daily write limit, which can be reached before Workers or R2 become expensive. Paid-plan included D1 usage is usually enough for this scale. |
+
+Approximate free-tier boundary:
+
+- Workers Free includes 100,000 Worker requests per day. With this project's request pattern, that is roughly up to 50,000 text interactions per day or 25,000 file interactions per day before the Workers request limit becomes the bottleneck.
+- D1 Free includes 5,000,000 rows read per day, 100,000 rows written per day, and 5 GB total storage. In practice, the D1 write limit is likely to be the first Free-plan limit reached. A conservative planning range is about 10,000 to 15,000 completed interactions per day, or about 300,000 to 450,000 evenly distributed interactions per month.
+- R2 Standard includes 10 GB-month of storage, 1,000,000 Class A operations per month, 10,000,000 Class B operations per month, and free public egress. One file-secret interaction is roughly 1 Class A operation and 2 Class B operations, so even 1,000,000 all-file interactions are close to the included R2 operation allowance. Storage cost depends on average file size: at 1,000,000 files, a 1 MB average encrypted file retained for about 25 hours is roughly 35 GB-month; a 15 MB average encrypted file is roughly 520 GB-month.
+
+There should not be a surprise bill from simply exceeding the Workers or D1 Free limits. When a Workers Free account exceeds 100,000 Worker requests in a day, Cloudflare stops invoking the Worker for those requests and returns a limit error depending on the route mode. When D1 Free exceeds 100,000 rows written per day, 5,000,000 rows read per day, or 5 GB total storage, D1 queries fail until the limits reset or storage is reduced. In other words, severe overuse on the Free tier is more likely to appear as service interruption than silent, unlimited scaling. R2 and Workers Paid are usage-based products, so usage above the included allowance can be billed; before running high-volume public deployments, configure Cloudflare budget alerts and usage notifications so any overage is visible early instead of becoming a surprise invoice.
+
 ## Limit Naming
 
 The `limits` object uses a small naming convention so each value's owner is clear:
