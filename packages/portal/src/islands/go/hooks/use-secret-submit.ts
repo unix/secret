@@ -17,6 +17,12 @@ import {
 } from '@/apis/secrets'
 import { formatBytes, httpProgress, transferStatus } from '@/apis/progress'
 import {
+  analyticsErrorType,
+  expirationBucket,
+  sizeBucket,
+  trackEvent,
+} from '@/lib/analytics'
+import {
   MAX_EXPIRATION_SECONDS,
   MAX_FILE_BYTES,
   MAX_FILE_CIPHER_BYTES,
@@ -184,27 +190,55 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
     try {
       const expiresInSeconds = Number(settings.expiresInSeconds)
       const reads = Number(settings.reads)
+      const baseCreateParams = {
+        secret_type: mode,
+        read_limit: reads,
+        expiration_bucket: expirationBucket(expiresInSeconds),
+      }
+      const trackCreateError = (error: unknown): void => {
+        trackEvent({
+          name: 'create_secret_error',
+          params: {
+            secret_type: mode,
+            error_type: analyticsErrorType(error),
+          },
+        })
+      }
       const settingsError = validateSettings({ expiresInSeconds, reads })
       if (settingsError) {
+        trackCreateError(settingsError)
         setStatus(settingsError)
         return
       }
 
       if (mode === 'file') {
-        if (!file) return
-        if (file.size > MAX_FILE_BYTES) {
-          setStatus(`Files are limited to ${formatBytes(MAX_FILE_BYTES)}.`)
+        if (!file) {
+          trackCreateError('missing_file')
           return
         }
 
+        const fileSizeBucket = sizeBucket(file.size)
+        if (file.size > MAX_FILE_BYTES) {
+          const message = `Files are limited to ${formatBytes(MAX_FILE_BYTES)}.`
+          trackCreateError(message)
+          setStatus(message)
+          return
+        }
+
+        trackEvent({
+          name: 'create_secret_start',
+          params: { ...baseCreateParams, size_bucket: fileSizeBucket },
+        })
         const encrypted = await encryptedFile({
           file,
           onProgress: setStatus,
         })
         if (encrypted.encryptedSize > MAX_FILE_CIPHER_BYTES) {
-          setStatus(
-            `Encrypted files are limited to ${formatBytes(MAX_FILE_CIPHER_BYTES)}.`,
-          )
+          const message = `Encrypted files are limited to ${formatBytes(
+            MAX_FILE_CIPHER_BYTES,
+          )}.`
+          trackCreateError(message)
+          setStatus(message)
           return
         }
 
@@ -237,6 +271,10 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
           secretId: init.secretId,
           uploadToken: init.uploadToken,
         })
+        trackEvent({
+          name: 'create_secret_success',
+          params: { ...baseCreateParams, size_bucket: fileSizeBucket },
+        })
         setStatus('Opening tracking page...')
         openTrackPage(
           complete.trackId,
@@ -247,17 +285,26 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
       }
 
       const size = byteLength(value)
+      const textSizeBucket = sizeBucket(size)
       if (size > MAX_TEXT_BYTES) {
-        setStatus(`Text secrets are limited to ${formatBytes(MAX_TEXT_BYTES)}.`)
+        const message = `Text secrets are limited to ${formatBytes(MAX_TEXT_BYTES)}.`
+        trackCreateError(message)
+        setStatus(message)
         return
       }
 
+      trackEvent({
+        name: 'create_secret_start',
+        params: { ...baseCreateParams, size_bucket: textSizeBucket },
+      })
       const sealed = await sealText(value)
       const cipherSize = byteLength(sealed.cipher)
       if (cipherSize > MAX_TEXT_CIPHER_BYTES) {
-        setStatus(
-          `Encrypted text secrets are limited to ${formatBytes(MAX_TEXT_CIPHER_BYTES)}.`,
-        )
+        const message = `Encrypted text secrets are limited to ${formatBytes(
+          MAX_TEXT_CIPHER_BYTES,
+        )}.`
+        trackCreateError(message)
+        setStatus(message)
         return
       }
 
@@ -267,10 +314,21 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
         expiresInSeconds,
         reads,
       })
+      trackEvent({
+        name: 'create_secret_success',
+        params: { ...baseCreateParams, size_bucket: textSizeBucket },
+      })
       setStatus('Opening tracking page...')
       openTrackPage(result.trackId, textLinks(result.readIds, sealed.secret))
       unlockOnFinish = false
     } catch (error) {
+      trackEvent({
+        name: 'create_secret_error',
+        params: {
+          secret_type: mode,
+          error_type: analyticsErrorType(error),
+        },
+      })
       setStatus(error instanceof Error ? error.message : 'Unable to create secret.')
     } finally {
       if (unlockOnFinish) {

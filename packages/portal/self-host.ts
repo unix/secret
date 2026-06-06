@@ -3,6 +3,7 @@
 export const selfHost = {
   "configs": {
     "apiOrigin": "https://secret-api.witt.im",
+    "ga4": "G-WRG9TEYF3T",
     "origin": "https://secret.witt.im",
     "workerName": "secret-portal"
   },

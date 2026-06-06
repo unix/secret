@@ -20,6 +20,7 @@ import AppContent from '@/components/app-content'
 import { httpProgress, transferStatus } from '@/apis/progress'
 import { downloadFileBytes, readSecret } from '@/apis/secrets'
 import { Button } from '@/components/ui/button'
+import { analyticsErrorType, sizeBucket, trackEvent } from '@/lib/analytics'
 
 const GCM_TAG_BYTES = 16
 const REVEAL_TEXT = 'Reveal Secret'
@@ -275,6 +276,10 @@ const OpenedFileSecret = ({
         frameRef.current = null
       }
       downloadBlob(localBlob, manifest.name)
+      trackEvent({
+        name: 'download_secret_file',
+        params: { size_bucket: sizeBucket(manifest.size) },
+      })
       setDownloaded(true)
       setDownloadProgress(null)
       onStatus('File downloaded.')
@@ -339,6 +344,10 @@ const OpenedFileSecret = ({
       const localBlob = await decryptFile(encrypted)
       setBlob(localBlob)
       downloadBlob(localBlob, manifest.name)
+      trackEvent({
+        name: 'download_secret_file',
+        params: { size_bucket: sizeBucket(manifest.size) },
+      })
       setDownloaded(true)
       onStatus('File downloaded.')
       window.setTimeout(() => {
@@ -409,6 +418,10 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
 
   const reveal = async () => {
     if (!accessFragment) {
+      trackEvent({
+        name: 'reveal_secret_error',
+        params: { error_type: 'missing_secret_fragment' },
+      })
       setStatus('This link is missing its secret fragment.')
       return
     }
@@ -416,6 +429,10 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
     const textAccess = decodeTextAccessFragment(accessFragment)
     const fileAccess = decodeFileAccessFragment(accessFragment)
     if (!textAccess || !fileAccess) {
+      trackEvent({
+        name: 'reveal_secret_error',
+        params: { error_type: 'invalid_secret_fragment' },
+      })
       setStatus('This link has an invalid secret fragment.')
       return
     }
@@ -432,6 +449,10 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
           secret: textAccess.secret,
         })
         setOpenedSecret({ kind: 'text', value })
+        trackEvent({
+          name: 'reveal_secret_success',
+          params: { secret_type: 'text' },
+        })
         setStatus('Secret opened.')
         return
       }
@@ -448,10 +469,21 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
         manifest,
         salt: secret.manifest.salt,
       })
+      trackEvent({
+        name: 'reveal_secret_success',
+        params: {
+          secret_type: 'file',
+          size_bucket: sizeBucket(manifest.size),
+        },
+      })
       setStatus('File information opened.')
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to open secret.'
+      trackEvent({
+        name: 'reveal_secret_error',
+        params: { error_type: analyticsErrorType(error) },
+      })
       setStatus(message)
       setUsed(isUnavailableSecretError(message))
     } finally {

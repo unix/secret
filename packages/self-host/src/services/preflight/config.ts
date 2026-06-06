@@ -43,10 +43,20 @@ const isSelfHostConfig = (value: unknown): value is SelfHostConfig => {
 
   return (
     typeof value.schemaVersion === 'number' &&
-    isConfigSection(value.portal) &&
+    isPortalConfigSection(value.portal) &&
     isConfigSection(value.edge) &&
     isRecord(value.limits)
   )
+}
+
+const isPortalConfigSection = (
+  value: unknown,
+): value is SelfHostConfig['portal'] => {
+  if (!isConfigSection(value)) return false
+  if (!('ga4' in value)) return true
+  if (typeof value.ga4 !== 'string') return false
+
+  return value.ga4 === '' || /^G-[A-Z0-9]+$/.test(value.ga4)
 }
 
 const isConfigSection = (value: unknown): value is SelfHostConfig['portal'] => {

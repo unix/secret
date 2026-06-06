@@ -2,7 +2,7 @@ export type EnvRecord = Record<string, string>
 
 export type SelfHostConfig = {
   readonly schemaVersion: number
-  readonly portal: ConfigSection
+  readonly portal: PortalConfigSection
   readonly edge: ConfigSection
   readonly limits: Record<string, unknown>
 }
@@ -10,6 +10,10 @@ export type SelfHostConfig = {
 export type ConfigSection = Record<string, unknown> & {
   readonly origin: string
   readonly workerName: string
+}
+
+export type PortalConfigSection = ConfigSection & {
+  readonly ga4?: string
 }
 
 export type PreflightResult = {

@@ -1,0 +1,20 @@
+---
+interface Props {
+  measurementId: string
+}
+
+const { measurementId } = Astro.props
+const scriptUrl = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
+  measurementId,
+)}`
+---
+
+<script async src={scriptUrl}></script>
+<script is:inline define:vars={{ measurementId }}>
+  window.dataLayer = window.dataLayer || []
+  window.gtag = function gtag() {
+    window.dataLayer.push(arguments)
+  }
+  window.gtag('js', new Date())
+  window.gtag('config', measurementId)
+</script>

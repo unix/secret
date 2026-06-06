@@ -1,5 +1,7 @@
 ---
+import GoogleAnalytics from '@/components/astro/GoogleAnalytics.astro'
 import '@/styles/global.css'
+import selfHost from '../../self-host'
 
 interface Props {
   title?: string | undefined
@@ -10,6 +12,7 @@ const {
   title = 'Secret - sharing and safer sharing',
   description = 'Share secrets that stay secret. Send encrypted text and files without giving the server the key.',
 } = Astro.props
+const ga4 = selfHost.configs.ga4
 ---
 
 <html lang="en">
@@ -23,23 +26,33 @@ const {
     <title>{title}</title>
 
     <!-- Primary Tags -->
-    <meta name="title" content="Secret - sharing and safer sharing">
-    <meta name="description" content="Client-side encrypted sharing for short-lived secrets.">
+    <meta name="title" content="Secret - sharing and safer sharing" />
+    <meta
+      name="description"
+      content="Client-side encrypted sharing for short-lived secrets."
+    />
 
     <!-- Twitter -->
-    <meta property="twitter:title" content="Secret - sharing and safer sharing">
-    <meta property="twitter:description" content="Client-side encrypted sharing for short-lived secrets.">
-    <meta property="twitter:image" content="https://secret.witt.im/og.png">
-    <meta property="twitter:url" content="https://secret.witt.im">
-    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Secret - sharing and safer sharing" />
+    <meta
+      property="twitter:description"
+      content="Client-side encrypted sharing for short-lived secrets."
+    />
+    <meta property="twitter:image" content="https://secret.witt.im/og.png" />
+    <meta property="twitter:url" content="https://secret.witt.im" />
+    <meta property="twitter:card" content="summary_large_image" />
 
     <!-- Facebook -->
-    <meta property="og:title" content="Secret - sharing and safer sharing">
-    <meta property="og:description" content="Client-side encrypted sharing for short-lived secrets.">
-    <meta property="og:url" content="https://secret.witt.im">
-    <meta property="og:image" content="https://secret.witt.im/og.png">
-    <meta property="og:type" content="website">
-    
+    <meta property="og:title" content="Secret - sharing and safer sharing" />
+    <meta
+      property="og:description"
+      content="Client-side encrypted sharing for short-lived secrets."
+    />
+    <meta property="og:url" content="https://secret.witt.im" />
+    <meta property="og:image" content="https://secret.witt.im/og.png" />
+    <meta property="og:type" content="website" />
+    {ga4 ? <GoogleAnalytics measurementId={ga4} /> : null}
+
     <slot name="head" />
   </head>
   <body>

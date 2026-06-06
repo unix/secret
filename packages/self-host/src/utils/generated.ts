@@ -33,6 +33,7 @@ const projectConfigs = (
     return {
       ...config.portal,
       apiOrigin: config.edge.origin,
+      ga4: config.portal.ga4 ?? '',
     }
   }
 
