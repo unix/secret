@@ -18,6 +18,14 @@ type D1Database = {
   batch(statements: readonly D1PreparedStatement[]): Promise<readonly D1Result[]>
 }
 
+type ExecutionContext = {
+  waitUntil(promise: Promise<unknown>): void
+}
+
+type RateLimit = {
+  limit(options: { readonly key: string }): Promise<{ readonly success: boolean }>
+}
+
 type R2Bucket = {
   head(key: string): Promise<unknown | null>
   get(key: string): Promise<R2ObjectBody | null>

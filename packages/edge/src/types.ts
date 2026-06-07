@@ -1,13 +1,19 @@
 import type { Context, Hono } from 'hono'
 
 export type Bindings = {
+  CHAIN_LIMITER: RateLimit
+  CREATE_SECRET_LIMITER: RateLimit
   DB: D1Database
   FILES: R2Bucket
   R2_ACCOUNT_ID?: string
   R2_ACCESS_KEY_ID?: string
   R2_SECRET_ACCESS_KEY?: string
   R2_BUCKET_NAME?: string
+  ETH_ALCHEMY_API_KEY?: string
+  ETH_INFURA_API_KEY?: string
 }
+
+export type RateLimitBindingName = 'CHAIN_LIMITER' | 'CREATE_SECRET_LIMITER'
 
 export type AppEnv = {
   Bindings: Bindings
@@ -46,6 +52,7 @@ export type ReadSecretRow = SecretRecord & {
 }
 
 export type StoreTextInput = {
+  readonly access?: EvmAccessInput
   readonly cipher: string
   readonly plainSize: number
   readonly expiresInSeconds: number
@@ -53,6 +60,7 @@ export type StoreTextInput = {
 }
 
 export type InitFileInput = {
+  readonly access?: EvmAccessInput
   readonly encryptedManifest: string
   readonly manifestIv: string
   readonly salt: string
@@ -66,4 +74,11 @@ export type InitFileInput = {
 
 export type CompleteFileInput = {
   readonly uploadToken: string
+}
+
+export type EvmAccessInput = {
+  readonly chainId: number
+  readonly address?: string
+  readonly ens?: string
+  readonly type: 'evm'
 }

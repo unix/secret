@@ -40,7 +40,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
         </p>
 
         <section>
-          <h2>System architecture</h2>
+          <h2 id="system-architecture">System architecture</h2>
           <div
             role="alert"
             class="mb-2 mt-4 rounded-md bg-amber-50 px-3 py-2.5 text-sm leading-6 text-amber-900">
@@ -82,7 +82,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
         </section>
 
         <section>
-          <h2>Text secret flow</h2>
+          <h2 id="text-secret-flow">Text secret flow</h2>
           <p>
             For text, the browser generates a <code>32-byte</code> access secret and encrypts
             the <code>UTF-8</code> payload locally. Random values come from
@@ -124,7 +124,7 @@ cipher = AES-GCM.encrypt(key, iv, plaintext, "secret-cipher:text")</code></pre>
         </section>
 
         <section>
-          <h2>File secret flow</h2>
+          <h2 id="file-secret-flow">File secret flow</h2>
           <p>
             Files use the same zero-knowledge model, but the data is split into an
             encrypted manifest and encrypted chunks. The manifest contains file
@@ -177,7 +177,7 @@ complete  -> read ids + track id become active</code></pre>
         </section>
 
         <section>
-          <h2>Access URL architecture</h2>
+          <h2 id="access-url-architecture">Access URL architecture</h2>
           <p>
             A readable Secret URL has two different security domains in one string.
             The path contains the <code>readId</code>, which the server needs in
@@ -206,7 +206,7 @@ complete  -> read ids + track id become active</code></pre>
         </section>
 
         <section>
-          <h2>Read, burn, and tracking</h2>
+          <h2 id="read-burn-and-tracking">Read, burn, and tracking</h2>
           <p>
             Read links are independent consumable tokens stored in <em>D1</em>. Each <code
               >readId</code
@@ -231,7 +231,7 @@ complete  -> read ids + track id become active</code></pre>
         </section>
 
         <section>
-          <h2>Lifecycle limits</h2>
+          <h2 id="lifecycle-limits">Lifecycle limits</h2>
           <p>
             Secret is deliberately short-lived. Text payloads are limited to
             <code>50 KB</code> of plaintext and <code>70 KB</code> of serialized ciphertext.
@@ -256,7 +256,7 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
         </section>
 
         <section>
-          <h2>Security model</h2>
+          <h2 id="security-model">Security model</h2>
           <p>
             Secret protects against the server, database, object store, network
             intermediaries, and accidental logs learning the plaintext, assuming the
@@ -351,7 +351,73 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
         </section>
 
         <section>
-          <h2>Further reading</h2>
+          <h2 id="eth-signature-verification">ETH signature verification</h2>
+          <p>
+            ETH verification adds an opener-authentication boundary in front of a
+            read link. Its purpose is not to encrypt or decrypt the secret and it
+            does not change the file key, text key, ciphertext, or browser-side
+            decryption path. Instead, it asks the person opening the link to prove
+            current control of the Ethereum mainnet address selected by the sender
+            before the server releases the underlying <code>readId</code>.
+          </p>
+          <p>
+            Conceptually, this is a possession check: the opener signs a short-lived
+            wallet message, the server verifies that the signature was produced by
+            the expected address, and only then is the normal encrypted read flow
+            allowed to continue. The signature is therefore an authorization signal
+            for opening the secret, not cryptographic material used by
+            <code>AES-GCM</code>, <code>HKDF</code>, or file chunk encryption.
+          </p>
+          <h3>Signed message scope</h3>
+          <p>
+            The message follows the intent of
+            <a
+              href="https://eips.ethereum.org/EIPS/eip-4361"
+              target="_blank"
+              rel="noreferrer">Sign-In with Ethereum</a
+            >: make wallet authentication human-readable, domain-scoped, and
+            machine-verifiable instead of asking a user to sign opaque bytes. It
+            carries the expected address, chain, domain, URI, statement, nonce,
+            issuance time, and expiration time. Those fields make the signature
+            meaningful only for this opening attempt, this link, and this browser
+            origin. The underlying signed-message format is also designed to be
+            distinct from Ethereum transactions, as described by
+            <a
+              href="https://eips.ethereum.org/EIPS/eip-191"
+              target="_blank"
+              rel="noreferrer">ERC-191</a
+            >.
+          </p>
+          <h3>Security value and limits</h3>
+          <p>
+            This is especially useful when transport trust is imperfect. TLS is
+            still required, but a network intermediary, proxy, or compromised TLS
+            path should not be able to silently turn an ETH-gated link into a usable
+            read link without a valid wallet signature for the configured address.
+            OWASP describes improper certificate validation and other
+            <a
+              href="https://mas.owasp.org/MASWE-0052/"
+              target="_blank"
+              rel="noreferrer">machine-in-the-middle risks</a
+            >
+            as attacks on transport trust; ETH verification adds a separate
+            application-layer proof that the opener intentionally participated in
+            this specific access attempt.
+          </p>
+          <p>
+            The boundary is deliberately narrow. ETH verification can confirm
+            control of a wallet address at the time of opening, reduce replay by
+            using expiring single-use challenges, and bind the signed intent to the
+            current domain and URI. It does not identify the human behind the wallet,
+            prevent a valid wallet owner from forwarding plaintext after decryption,
+            protect a compromised browser or wallet, or replace HTTPS and careful
+            certificate validation. It is an access-control check for who may open
+            the secret, not a second encryption scheme for the secret itself.
+          </p>
+        </section>
+
+        <section>
+          <h2 id="further-reading">Further reading</h2>
           <p>
             These references are useful for reviewing the risk categories behind
             Secret's storage and transmission boundaries:

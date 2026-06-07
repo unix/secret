@@ -27,6 +27,15 @@ type CustomDomainRoute = {
   readonly custom_domain: true
 }
 
+type RateLimitBinding = {
+  readonly name: string
+  readonly namespace_id: string
+  readonly simple: {
+    readonly limit: number
+    readonly period: 60
+  }
+}
+
 type WorkerProject = 'edge' | 'portal'
 
 const edgeWranglerJsoncRule = (): FileRule => {
@@ -73,7 +82,15 @@ const writeEdgeWrangler = async (secretEnv: SECRET_ENV): Promise<void> => {
     applyModification(
       applyModification(
         applyModification(
-          applyModification(contents, ['name'], workerName(secretEnv, 'edge')),
+          applyModification(
+            applyModification(
+              applyModification(contents, ['name'], workerName(secretEnv, 'edge')),
+              ['secrets', 'required'],
+              edgeRequiredSecrets(),
+            ),
+            ['ratelimits'],
+            edgeRateLimits(secretEnv),
+          ),
           ['routes'],
           customDomainRoutes(secretEnv, 'edge'),
         ),
@@ -160,6 +177,40 @@ const customDomainRoutes = (
       pattern: new URL(secretEnv.config[project].origin).hostname,
       custom_domain: true,
     },
+  ]
+}
+
+const edgeRateLimits = (secretEnv: SECRET_ENV): readonly RateLimitBinding[] => {
+  const edgeName = workerName(secretEnv, 'edge')
+
+  return [
+    {
+      name: 'CREATE_SECRET_LIMITER',
+      namespace_id: `${edgeName}-create`,
+      simple: {
+        limit: 15,
+        period: 60,
+      },
+    },
+    {
+      name: 'CHAIN_LIMITER',
+      namespace_id: `${edgeName}-chain`,
+      simple: {
+        limit: 20,
+        period: 60,
+      },
+    },
+  ]
+}
+
+const edgeRequiredSecrets = (): readonly string[] => {
+  return [
+    'R2_ACCOUNT_ID',
+    'R2_ACCESS_KEY_ID',
+    'R2_SECRET_ACCESS_KEY',
+    'R2_BUCKET_NAME',
+    'ETH_ALCHEMY_API_KEY',
+    'ETH_INFURA_API_KEY',
   ]
 }
 

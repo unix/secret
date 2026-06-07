@@ -43,6 +43,22 @@ const conflict = (c: JsonContext, message: string, details?: unknown): Response 
   return json(c, 409, message, details)
 }
 
+const notImplemented = (
+  c: JsonContext,
+  message: string,
+  details?: unknown,
+): Response => {
+  return json(c, 501, message, details)
+}
+
+const badGateway = (
+  c: JsonContext,
+  message: string,
+  details?: unknown,
+): Response => {
+  return json(c, 502, message, details)
+}
+
 const gone = (c: JsonContext, message: string, details?: unknown): Response => {
   return json(c, 410, message, details)
 }
@@ -64,6 +80,8 @@ export const http = {
   badRequest,
   notFound,
   conflict,
+  notImplemented,
+  badGateway,
   gone,
   serverError,
   noContent,

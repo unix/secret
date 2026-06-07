@@ -9,6 +9,10 @@ const textDecoder = new TextDecoder()
 
 const LOCAL_API_BASE = '/__LOCAL__/api'
 const LOCAL_HOST_PARTS = ['localhost', '127.0.0.1'] as const
+const RATE_LIMIT_MESSAGE =
+  'Requests are coming in too quickly. Please wait a minute and try again.'
+const UNSUPPORTED_EVM_ACCOUNT_MESSAGE =
+  'Contract addresses and smart wallets are not supported yet.'
 
 const isLocalHost = (): boolean => {
   const hostname = globalThis.location?.hostname ?? ''
@@ -72,8 +76,27 @@ const arrayBufferErrorMessage = (data: ArrayBuffer): string | null => {
   return text
 }
 
+const isEmptyErrorData = (data: unknown): boolean => {
+  if (data === undefined || data === null) return true
+  if (typeof data === 'string') return data.length === 0
+  if (data instanceof ArrayBuffer) return data.byteLength === 0
+
+  return false
+}
+
 const errorMessage = (error: unknown): string | null => {
   if (!axios.isAxiosError(error)) return null
+
+  if (error.response?.status === 429) {
+    return RATE_LIMIT_MESSAGE
+  }
+
+  if (error.response?.status === 501) {
+    return 'This deployment has not configured an Ethereum RPC provider yet.'
+  }
+  if (error.response?.status === 400 && isEmptyErrorData(error.response.data)) {
+    return UNSUPPORTED_EVM_ACCOUNT_MESSAGE
+  }
 
   const requestUrl = error.config?.url ?? ''
   if (

@@ -1,8 +1,13 @@
 import { useMemo, useReducer } from 'react'
 import { DEFAULT_EXPIRATION_SECONDS, DEFAULT_LINK_COUNT } from '@/islands/go/limits'
-import type { SecretMode, SecretSettings } from '@/islands/go/types'
+import type {
+  EvmAccessRequirement,
+  SecretMode,
+  SecretSettings,
+} from '@/islands/go/types'
 
 type GoSecretState = {
+  readonly access: EvmAccessRequirement | null
   readonly busy: boolean
   readonly file: File | null
   readonly mode: SecretMode
@@ -12,6 +17,7 @@ type GoSecretState = {
 }
 
 type GoSecretAction =
+  | { readonly type: 'set-access'; readonly access: EvmAccessRequirement | null }
   | { readonly type: 'set-mode'; readonly mode: SecretMode }
   | { readonly type: 'set-value'; readonly value: string }
   | { readonly type: 'set-file'; readonly file: File | null }
@@ -22,6 +28,7 @@ type GoSecretAction =
   | { readonly type: 'prepare-submit' }
 
 const initialState: GoSecretState = {
+  access: null,
   mode: 'text',
   value: '',
   file: null,
@@ -34,6 +41,10 @@ const initialState: GoSecretState = {
 }
 
 const reducer = (state: GoSecretState, action: GoSecretAction): GoSecretState => {
+  if (action.type === 'set-access') {
+    return { ...state, access: action.access }
+  }
+
   if (action.type === 'set-mode') {
     return { ...state, mode: action.mode }
   }
@@ -77,6 +88,8 @@ export const useGoSecretState = () => {
   const actions = useMemo(
     () => ({
       prepareSubmit: () => dispatch({ type: 'prepare-submit' }),
+      setAccess: (access: EvmAccessRequirement | null) =>
+        dispatch({ type: 'set-access', access }),
       setBusy: (busy: boolean) => dispatch({ type: 'set-busy', busy }),
       setExpiresInSeconds: (expiresInSeconds: string) =>
         dispatch({ type: 'set-expires', expiresInSeconds }),

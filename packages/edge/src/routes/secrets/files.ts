@@ -1,4 +1,5 @@
 import { d1, r2 } from '@/storage'
+import { d1Evm } from '@/storage/d1-evm'
 import type { AppContext, CompleteFileInput, InitFileInput } from '@/types'
 import {
   MAX_FILE_BYTES,
@@ -8,9 +9,11 @@ import {
   TRACKING_TTL_MS,
   UPLOAD_TOKEN_BYTES,
 } from '@/utils/config'
+import { ethRpcProvider } from '@/services/eth-rpc'
 import { http } from '@/utils/http'
 import { createReadIds, randomId } from '@/utils/ids'
 import { ensureExpiresInSeconds, ensureReads } from '@/utils/validation'
+import { evmAccessPolicy } from './access'
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
@@ -47,10 +50,34 @@ const COMPLETE_FILE_SECRET_QUERY = [
 
 export const initFileSecret = async (c: AppContext): Promise<Response> => {
   const input = await c.req.json<InitFileInput>()
+  const timestamp = Date.now()
   const expiresInSeconds = ensureExpiresInSeconds(input.expiresInSeconds)
   const reads = ensureReads(input.reads)
   if (!expiresInSeconds || !reads) {
     return http.badRequest(c, 'Invalid expiration or read count.')
+  }
+  const provider = ethRpcProvider(c.env)
+  const accessPolicy = await evmAccessPolicy({
+    db: c.env.DB,
+    provider,
+    timestamp,
+    value: input.access,
+    waitUntil: task => c.executionCtx.waitUntil(task),
+  })
+  if (accessPolicy === 'invalid') {
+    return http.badRequest(c, 'Invalid EVM access policy.')
+  }
+  if (accessPolicy === 'conflict') {
+    return http.conflict(c, 'ENS name could not be resolved before creating.')
+  }
+  if (accessPolicy === 'unsupported') {
+    return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
+  }
+  if (accessPolicy === 'unavailable') {
+    return http.badGateway(c, 'Ethereum RPC is unavailable.')
+  }
+  if (accessPolicy === 'unsupported-account') {
+    return c.body(null, 400)
   }
 
   const isMissingManifest = !input.encryptedManifest
@@ -89,7 +116,6 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
     )
   }
 
-  const timestamp = Date.now()
   const expiresAt = timestamp + expiresInSeconds * 1000
   const secretId = randomId(SECRET_ID_BYTES)
   const uploadToken = randomId(UPLOAD_TOKEN_BYTES)
@@ -116,6 +142,14 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
       timestamp,
     )
     .run()
+  if (accessPolicy) {
+    await d1Evm.insertPolicy({
+      db: c.env.DB,
+      secretId,
+      policy: accessPolicy,
+      createdAt: timestamp,
+    })
+  }
 
   return c.json({
     kind: 'file',
@@ -162,6 +196,24 @@ export const completeFileSecret = async (c: AppContext): Promise<Response> => {
     readIds,
     expiresAt: secret.expires_at,
   })
+  const accessPolicy = await d1Evm.findPolicy(c.env.DB, secretId)
+  if (accessPolicy) {
+    const evmIds = await d1Evm.insertReadIds({
+      db: c.env.DB,
+      secretId,
+      readIds,
+      policy: accessPolicy,
+      expiresAt: secret.expires_at,
+      createdAt: timestamp,
+    })
+
+    return c.json({
+      kind: 'file',
+      evmIds,
+      trackId,
+      expiresAt: secret.expires_at,
+    })
+  }
 
   return c.json({
     kind: 'file',

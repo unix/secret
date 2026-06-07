@@ -4,8 +4,8 @@
   "routes": [
     {
       "pattern": "secret-api.witt.im",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
@@ -17,12 +17,32 @@
   "triggers": {
     "crons": ["0 0 * * *"],
   },
+  "ratelimits": [
+    {
+      "name": "CREATE_SECRET_LIMITER",
+      "namespace_id": "secret-edge-create",
+      "simple": {
+        "limit": 15,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CHAIN_LIMITER",
+      "namespace_id": "secret-edge-chain",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+  ],
   "secrets": {
     "required": [
       "R2_ACCOUNT_ID",
       "R2_ACCESS_KEY_ID",
       "R2_SECRET_ACCESS_KEY",
       "R2_BUCKET_NAME",
+      "ETH_ALCHEMY_API_KEY",
+      "ETH_INFURA_API_KEY",
     ],
   },
   "d1_databases": [

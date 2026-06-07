@@ -1,4 +1,5 @@
 export type StoredTrackLink = {
+  readonly access?: 'evm'
   readonly readId: string
   readonly value: string
 }
@@ -16,9 +17,12 @@ const storageKey = (trackId: string): string => {
 const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
   if (typeof value !== 'object' || value === null) return false
 
+  const access = 'access' in value ? value.access : undefined
+
   return (
     'readId' in value &&
     'value' in value &&
+    (access === undefined || access === 'evm') &&
     typeof value.readId === 'string' &&
     typeof value.value === 'string'
   )

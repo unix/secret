@@ -8,6 +8,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { trackSecret, type TrackSecretResponse } from '@/apis/secrets'
 import { Button } from '@/components/ui/button'
+import { EthLogo } from '@/components/eth-logo'
 import { Loading } from '@/components/ui/loading'
 import { cn } from '@/lib/utils'
 import AppContent from '@/components/app-content'
@@ -29,6 +30,34 @@ const statusLabel = (status: TrackSecretResponse['status']): string => {
   if (status === 'expired') return 'Expired'
 
   return 'Pending'
+}
+
+const isEvmAccessUrl = (value: string): boolean => {
+  try {
+    return new URL(value, 'https://secret.local').pathname.startsWith('/e/')
+  } catch {
+    return false
+  }
+}
+
+const isEvmProtectedLink = (
+  link: StoredTrackLink | undefined,
+  value: string | undefined,
+): boolean => {
+  if (link?.access === 'evm') return true
+  if (!value) return false
+
+  return isEvmAccessUrl(value)
+}
+
+const EthereumLogoMark = () => {
+  return (
+    <span
+      title="ETH signature protected"
+      className="inline-flex h-5 w-3 shrink-0 items-start pt-[5px] text-zinc-500">
+      <EthLogo label="ETH signature protected" />
+    </span>
+  )
 }
 
 const Metric = ({ label, value }: { label: string; value: string }) => {
@@ -71,14 +100,17 @@ const ReadLinksSessionAlert = () => {
 
 const ReadRow = ({
   consumedAt,
+  link,
   value,
 }: {
   readonly consumedAt: number | null
+  readonly link?: StoredTrackLink
   readonly value?: string
 }) => {
   const [copied, setCopied] = useState(false)
   const consumedLabel = consumedAt ? dateTime(consumedAt) : null
   const consumed = consumedAt !== null
+  const isEvmProtected = isEvmProtectedLink(link, value)
   const copyLink = async () => {
     if (!value) return
 
@@ -96,7 +128,10 @@ const ReadRow = ({
       <td className="px-4 py-3 align-top">
         {value ? (
           <pre className="max-w-full rounded-md bg-zinc-50 px-2.5 py-2 font-mono text-[11px] leading-5 whitespace-pre-wrap text-zinc-800 break-all [overflow-wrap:anywhere]">
-            <code>{value}</code>
+            <span className="flex min-w-0 items-start gap-1">
+              {isEvmProtected ? <EthereumLogoMark /> : null}
+              <code className="min-w-0 flex-1">{value}</code>
+            </span>
           </pre>
         ) : (
           <span className="text-xs leading-5 text-zinc-400">Unavailable</span>
@@ -143,7 +178,7 @@ const ReadList = ({
   readonly reads: TrackSecretResponse['reads']
 }) => {
   const linksByReadId = useMemo(() => {
-    return new Map(links.map(link => [link.readId, link.value]))
+    return new Map(links.map(link => [link.readId, link]))
   }, [links])
 
   return (
@@ -169,13 +204,18 @@ const ReadList = ({
             </tr>
           </thead>
           <tbody>
-            {reads.map(read => (
-              <ReadRow
-                key={read.readId}
-                value={linksByReadId.get(read.readId)}
-                consumedAt={read.consumedAt}
-              />
-            ))}
+            {reads.map((read, index) => {
+              const link = linksByReadId.get(read.readId) ?? links[index]
+
+              return (
+                <ReadRow
+                  key={read.readId}
+                  link={link}
+                  value={link?.value}
+                  consumedAt={read.consumedAt}
+                />
+              )
+            })}
           </tbody>
         </table>
       </div>

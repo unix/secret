@@ -12,6 +12,7 @@ import {
 import {
   completeFileSecret,
   createTextSecret,
+  type EvmAccessInput,
   initFileSecret,
   uploadEncryptedFile,
 } from '@/apis/secrets'
@@ -31,6 +32,7 @@ import {
   MAX_TEXT_CIPHER_BYTES,
 } from '@/islands/go/limits'
 import { saveTrackLinks, type StoredTrackLink } from '@/islands/track-links'
+import type { EvmAccessRequirement } from '@/islands/go/types'
 import type { GoSecretStateApi } from './use-go-secret-state'
 
 type EncryptedFile = {
@@ -97,6 +99,17 @@ const fileLinks = (
   }))
 }
 
+const evmLinks = (
+  evmIds: readonly string[],
+  secret: string,
+): readonly StoredTrackLink[] => {
+  return evmIds.map(evmId => ({
+    access: 'evm',
+    readId: evmId,
+    value: `${window.location.origin}/e/${encodeURIComponent(evmId)}#${secret}`,
+  }))
+}
+
 const trackLink = (trackId: string): string => {
   return `${window.location.origin}/track/${encodeURIComponent(trackId)}`
 }
@@ -120,6 +133,26 @@ const validateSettings = ({
   if (reads > MAX_LINK_COUNT) return `Read links cannot exceed ${MAX_LINK_COUNT}.`
 
   return null
+}
+
+const accessInput = (
+  access: EvmAccessRequirement | null,
+): EvmAccessInput | undefined => {
+  if (!access) return undefined
+  if (typeof access.ens === 'string') {
+    return {
+      chainId: access.chainId,
+      ens: access.ens,
+      type: access.type,
+    }
+  }
+  if (!access.address) return undefined
+
+  return {
+    address: access.address,
+    chainId: access.chainId,
+    type: access.type,
+  }
 }
 
 const openTrackPage = (trackId: string, links: readonly StoredTrackLink[]): void => {
@@ -180,7 +213,7 @@ const encryptedFile = async ({
 }
 
 export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
-  const { file, mode, settings, value } = state
+  const { access, file, mode, settings, value } = state
   const { prepareSubmit, setBusy, setStatus } = actions
 
   return useCallback(async () => {
@@ -244,6 +277,7 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
 
         setStatus('Initializing upload...')
         const init = await initFileSecret({
+          access: accessInput(access),
           encryptedManifest: encrypted.manifest.cipher,
           manifestIv: encrypted.manifest.iv,
           salt: encrypted.manifest.salt,
@@ -276,6 +310,15 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
           params: { ...baseCreateParams, size_bucket: fileSizeBucket },
         })
         setStatus('Opening tracking page...')
+        if ('evmIds' in complete) {
+          openTrackPage(
+            complete.trackId,
+            evmLinks(complete.evmIds, encrypted.secret),
+          )
+          unlockOnFinish = false
+          return
+        }
+
         openTrackPage(
           complete.trackId,
           fileLinks(complete.readIds, encrypted.secret),
@@ -309,6 +352,7 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
       }
 
       const result = await createTextSecret({
+        access: accessInput(access),
         cipher: sealed.cipher,
         plainSize: size,
         expiresInSeconds,
@@ -319,6 +363,12 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
         params: { ...baseCreateParams, size_bucket: textSizeBucket },
       })
       setStatus('Opening tracking page...')
+      if ('evmIds' in result) {
+        openTrackPage(result.trackId, evmLinks(result.evmIds, sealed.secret))
+        unlockOnFinish = false
+        return
+      }
+
       openTrackPage(result.trackId, textLinks(result.readIds, sealed.secret))
       unlockOnFinish = false
     } catch (error) {
@@ -336,6 +386,7 @@ export const useSecretSubmit = ({ actions, state }: GoSecretStateApi) => {
       }
     }
   }, [
+    access,
     file,
     mode,
     prepareSubmit,

@@ -16,19 +16,42 @@ import {
   openFileManifest,
   openText,
 } from 'secret-cipher'
+import { getAddress } from 'viem'
+import { createSiweMessage } from 'viem/siwe'
 import AppContent from '@/components/app-content'
 import { httpProgress, transferStatus } from '@/apis/progress'
-import { downloadFileBytes, readSecret } from '@/apis/secrets'
+import {
+  createEvmChallenge,
+  downloadFileBytes,
+  readSecret,
+  verifyEvmAccess,
+} from '@/apis/secrets'
 import { Button } from '@/components/ui/button'
+import { Loading } from '@/components/ui/loading'
 import { analyticsErrorType, sizeBucket, trackEvent } from '@/lib/analytics'
 
 const GCM_TAG_BYTES = 16
+const MAINNET_CHAIN_ID = 1
 const REVEAL_TEXT = 'Reveal Secret'
 const OPENING_TEXT = 'Opening Secret...'
 const DECRYPTION_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+-?'
 const DECRYPTION_STEPS = 12
 const USED_SECRET_ERROR = 'Secret link has already been used.'
 const EXPIRED_SECRET_ERROR = 'Secret has expired.'
+const WALLET_UNAVAILABLE_ERROR =
+  'No Ethereum wallet was detected. Install or unlock a wallet, then try again.'
+const WALLET_CONNECT_ERROR = 'Unable to connect to Ethereum wallet.'
+const SIGNATURE_CANCELLED_ERROR = 'You cancelled the signature request.'
+const WALLET_CONNECTION_CANCELLED_ERROR = 'You cancelled the wallet connection.'
+const UNSUPPORTED_EVM_NETWORK_ERROR =
+  'This link is not configured for Ethereum mainnet.'
+
+type ReadStatusKind = 'error' | 'info' | 'loading' | 'success' | 'warning'
+
+type ReadStatus = {
+  readonly kind: ReadStatusKind
+  readonly message: string
+}
 
 type OpenedSecret =
   | {
@@ -39,8 +62,32 @@ type OpenedSecret =
       readonly fileSecret: FileSecret
       readonly kind: 'file'
       readonly manifest: FileManifest
+      readonly readId: string
       readonly salt: string
     }
+
+type EthereumProvider = {
+  readonly request: (input: {
+    readonly method: string
+    readonly params?: readonly unknown[]
+  }) => Promise<unknown>
+}
+
+type ReadSecretIslandProps =
+  | {
+      readonly evmId?: never
+      readonly readId: string
+    }
+  | {
+      readonly evmId: string
+      readonly readId?: never
+    }
+
+declare global {
+  interface Window {
+    ethereum?: EthereumProvider
+  }
+}
 
 const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob)
@@ -124,6 +171,180 @@ const formatFileMeta = (manifest: FileManifest): string => {
 
 const isUnavailableSecretError = (message: string): boolean => {
   return message === USED_SECRET_ERROR || message === EXPIRED_SECRET_ERROR
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
+}
+
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message
+  if (isRecord(error) && typeof error.message === 'string') return error.message
+
+  return ''
+}
+
+const walletErrorCode = (error: unknown): number | string | null => {
+  if (!isRecord(error)) return null
+  const { code } = error
+  if (typeof code === 'number' || typeof code === 'string') return code
+
+  return null
+}
+
+const isUserRejectedRequest = (error: unknown): boolean => {
+  const code = walletErrorCode(error)
+  if (code === 4001 || code === '4001' || code === 'ACTION_REJECTED') return true
+
+  return /cancel|denied|reject/i.test(errorMessage(error))
+}
+
+const walletRequestError = (error: unknown, fallback: string): Error => {
+  const message = errorMessage(error)
+  if (!message) return new Error(fallback)
+
+  return new Error(`${fallback} ${message}`)
+}
+
+const walletAddress = async (): Promise<`0x${string}`> => {
+  const provider = window.ethereum
+  if (!provider) {
+    throw new Error(WALLET_UNAVAILABLE_ERROR)
+  }
+
+  let accounts: unknown
+  try {
+    accounts = await provider.request({ method: 'eth_requestAccounts' })
+  } catch (error) {
+    if (isUserRejectedRequest(error)) {
+      throw new Error(WALLET_CONNECTION_CANCELLED_ERROR)
+    }
+
+    throw walletRequestError(error, WALLET_CONNECT_ERROR)
+  }
+  if (!Array.isArray(accounts) || typeof accounts[0] !== 'string') {
+    throw new Error('Ethereum wallet did not return an address.')
+  }
+
+  return getAddress(accounts[0])
+}
+
+const personalSign = async ({
+  address,
+  message,
+}: {
+  readonly address: `0x${string}`
+  readonly message: string
+}): Promise<string> => {
+  const provider = window.ethereum
+  if (!provider) {
+    throw new Error(WALLET_UNAVAILABLE_ERROR)
+  }
+
+  let signature: unknown
+  try {
+    signature = await provider.request({
+      method: 'personal_sign',
+      params: [message, address],
+    })
+  } catch (error) {
+    if (isUserRejectedRequest(error)) {
+      throw new Error(SIGNATURE_CANCELLED_ERROR)
+    }
+
+    throw walletRequestError(error, 'Unable to sign the wallet message.')
+  }
+  if (typeof signature !== 'string') {
+    throw new Error('Ethereum wallet did not return a signature.')
+  }
+
+  return signature
+}
+
+const requestEvmReadId = async (
+  evmId: string,
+  onStatus: (status: ReadStatus) => void,
+): Promise<string> => {
+  onStatus({ kind: 'loading', message: 'Waiting for wallet connection...' })
+  const address = await walletAddress()
+  onStatus({ kind: 'loading', message: 'Preparing signature request...' })
+  const challenge = await createEvmChallenge(evmId, {
+    origin: window.location.origin,
+  })
+  if (challenge.chainId !== MAINNET_CHAIN_ID) {
+    throw new Error(UNSUPPORTED_EVM_NETWORK_ERROR)
+  }
+
+  const message = createSiweMessage({
+    address,
+    chainId: challenge.chainId,
+    domain: challenge.domain,
+    expirationTime: new Date(challenge.expiresAt),
+    issuedAt: new Date(challenge.issuedAt),
+    nonce: challenge.nonce,
+    statement: challenge.statement,
+    uri: challenge.uri,
+    version: challenge.version,
+  })
+  onStatus({ kind: 'loading', message: 'Waiting for wallet signature...' })
+  const signature = await personalSign({ address, message })
+  onStatus({ kind: 'loading', message: 'Verifying signature...' })
+  const result = await verifyEvmAccess({
+    evmId,
+    challengeId: challenge.challengeId,
+    message,
+    signature,
+  })
+
+  return result.readId
+}
+
+const readStatusKind = (message: string): ReadStatusKind => {
+  if (
+    message === SIGNATURE_CANCELLED_ERROR ||
+    message === WALLET_CONNECTION_CANCELLED_ERROR ||
+    isUnavailableSecretError(message)
+  ) {
+    return 'warning'
+  }
+  if (
+    message === WALLET_UNAVAILABLE_ERROR ||
+    message.startsWith(WALLET_CONNECT_ERROR) ||
+    message === UNSUPPORTED_EVM_NETWORK_ERROR
+  ) {
+    return 'error'
+  }
+
+  return 'error'
+}
+
+const StatusMessage = ({ status }: { readonly status: ReadStatus }) => {
+  if (status.kind === 'loading') {
+    return (
+      <Loading
+        label={status.message}
+        className="text-xs leading-5 text-muted-foreground"
+      />
+    )
+  }
+
+  if (status.kind === 'error' || status.kind === 'warning') {
+    const className = status.kind === 'error' ? 'text-red-700' : 'text-amber-700'
+
+    return (
+      <div
+        role="alert"
+        className={`mx-auto max-w-[520px] text-center text-xs leading-5 ${className}`}>
+        {status.message}
+      </div>
+    )
+  }
+
+  return (
+    <p className="text-center text-xs leading-5 text-muted-foreground">
+      {status.message}
+    </p>
+  )
 }
 
 const RevealSecretButton = ({
@@ -242,7 +463,7 @@ const OpenedFileSecret = ({
   readonly manifest: FileManifest
   readonly readId: string
   readonly salt: string
-  readonly onStatus: (status: string) => void
+  readonly onStatus: (status: ReadStatus) => void
   readonly onUsed: () => void
 }) => {
   const frameRef = useRef<number | null>(null)
@@ -282,7 +503,7 @@ const OpenedFileSecret = ({
       })
       setDownloaded(true)
       setDownloadProgress(null)
-      onStatus('File downloaded.')
+      onStatus({ kind: 'success', message: 'File downloaded.' })
       window.setTimeout(() => {
         setDownloaded(false)
       }, 1500)
@@ -311,7 +532,10 @@ const OpenedFileSecret = ({
         }),
       )
       offset += ciphertextLength
-      onStatus(`Decrypted ${chunkIndex + 1}/${manifest.chunkCount} chunks...`)
+      onStatus({
+        kind: 'loading',
+        message: `Decrypted ${chunkIndex + 1}/${manifest.chunkCount} chunks...`,
+      })
     }
 
     return new Blob(chunks.map(chunkToArrayBuffer), { type: manifest.type })
@@ -332,15 +556,16 @@ const OpenedFileSecret = ({
           setDownloadProgress(
             progress.percent === null ? 0 : Math.round(progress.percent * 100),
           )
-          onStatus(
-            transferStatus({
+          onStatus({
+            kind: 'loading',
+            message: transferStatus({
               verb: 'Downloading',
               progress,
             }),
-          )
+          })
         }),
       )
-      onStatus('Decrypting file...')
+      onStatus({ kind: 'loading', message: 'Decrypting file...' })
       const localBlob = await decryptFile(encrypted)
       setBlob(localBlob)
       downloadBlob(localBlob, manifest.name)
@@ -349,14 +574,14 @@ const OpenedFileSecret = ({
         params: { size_bucket: sizeBucket(manifest.size) },
       })
       setDownloaded(true)
-      onStatus('File downloaded.')
+      onStatus({ kind: 'success', message: 'File downloaded.' })
       window.setTimeout(() => {
         setDownloaded(false)
       }, 1500)
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to download file.'
-      onStatus(message)
+      onStatus({ kind: readStatusKind(message), message })
       if (isUnavailableSecretError(message)) {
         onUsed()
       }
@@ -405,8 +630,8 @@ const OpenedFileSecret = ({
   )
 }
 
-export const ReadSecretIsland = ({ readId }: { readId: string }) => {
-  const [status, setStatus] = useState('')
+export const ReadSecretIsland = (props: ReadSecretIslandProps) => {
+  const [status, setStatus] = useState<ReadStatus | null>(null)
   const [openedSecret, setOpenedSecret] = useState<OpenedSecret | null>(null)
   const [busy, setBusy] = useState(false)
   const [used, setUsed] = useState(false)
@@ -422,7 +647,10 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
         name: 'reveal_secret_error',
         params: { error_type: 'missing_secret_fragment' },
       })
-      setStatus('This link is missing its secret fragment.')
+      setStatus({
+        kind: 'error',
+        message: 'This link is missing its secret fragment.',
+      })
       return
     }
 
@@ -433,17 +661,34 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
         name: 'reveal_secret_error',
         params: { error_type: 'invalid_secret_fragment' },
       })
-      setStatus('This link has an invalid secret fragment.')
+      setStatus({
+        kind: 'error',
+        message: 'This link has an invalid secret fragment.',
+      })
       return
     }
 
     setBusy(true)
-    setStatus('Opening secret...')
+    setStatus({
+      kind: 'loading',
+      message: props.evmId
+        ? 'Waiting for wallet verification...'
+        : 'Opening secret...',
+    })
     setOpenedSecret(null)
     setUsed(false)
     try {
+      const readId = props.evmId
+        ? await requestEvmReadId(props.evmId, setStatus)
+        : props.readId
+      if (!readId) {
+        throw new Error('Secret link is missing its read id.')
+      }
+
+      setStatus({ kind: 'loading', message: 'Opening encrypted secret...' })
       const secret = await readSecret(readId)
       if (secret.kind === 'text') {
+        setStatus({ kind: 'loading', message: 'Decrypting text secret...' })
         const value = await openText({
           cipher: secret.cipher,
           secret: textAccess.secret,
@@ -453,10 +698,11 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
           name: 'reveal_secret_success',
           params: { secret_type: 'text' },
         })
-        setStatus('Secret opened.')
+        setStatus({ kind: 'success', message: 'Secret opened.' })
         return
       }
 
+      setStatus({ kind: 'loading', message: 'Opening file information...' })
       const manifest = await openFileManifest({
         salt: secret.manifest.salt,
         iv: secret.manifest.iv,
@@ -467,6 +713,7 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
         fileSecret: fileAccess.secret,
         kind: 'file',
         manifest,
+        readId,
         salt: secret.manifest.salt,
       })
       trackEvent({
@@ -476,7 +723,7 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
           size_bucket: sizeBucket(manifest.size),
         },
       })
-      setStatus('File information opened.')
+      setStatus({ kind: 'success', message: 'File information opened.' })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to open secret.'
@@ -484,7 +731,7 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
         name: 'reveal_secret_error',
         params: { error_type: analyticsErrorType(error) },
       })
-      setStatus(message)
+      setStatus({ kind: readStatusKind(message), message })
       setUsed(isUnavailableSecretError(message))
     } finally {
       setBusy(false)
@@ -499,25 +746,17 @@ export const ReadSecretIsland = ({ readId }: { readId: string }) => {
     <AppContent>
       <div className="space-y-5">
         {!openedSecret && <div className="text-center">{revealButton}</div>}
-        {!openedSecret && status && (
-          <p className="text-center text-xs leading-5 text-muted-foreground">
-            {status}
-          </p>
-        )}
+        {!openedSecret && status && <StatusMessage status={status} />}
         {openedSecret && (
           <>
-            {status && (
-              <p className="text-center text-xs leading-5 text-muted-foreground">
-                {status}
-              </p>
-            )}
+            {status && <StatusMessage status={status} />}
             {openedSecret.kind === 'text' ? (
               <OpenedTextSecret value={openedSecret.value} />
             ) : (
               <OpenedFileSecret
                 fileSecret={openedSecret.fileSecret}
                 manifest={openedSecret.manifest}
-                readId={readId}
+                readId={openedSecret.readId}
                 salt={openedSecret.salt}
                 onStatus={setStatus}
                 onUsed={() => setUsed(true)}

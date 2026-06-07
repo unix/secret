@@ -1,4 +1,5 @@
 import { d1 } from '@/storage'
+import { d1Evm } from '@/storage/d1-evm'
 import type { AppContext, StoreTextInput } from '@/types'
 import {
   MAX_TEXT_BYTES,
@@ -7,10 +8,12 @@ import {
   TRACK_ID_BYTES,
   TRACKING_TTL_MS,
 } from '@/utils/config'
+import { ethRpcProvider } from '@/services/eth-rpc'
 import { textEncoder } from '@/utils/encoding'
 import { http } from '@/utils/http'
 import { createReadIds, randomId } from '@/utils/ids'
 import { ensureExpiresInSeconds, ensureReads } from '@/utils/validation'
+import { evmAccessPolicy } from './access'
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
@@ -35,10 +38,34 @@ const INSERT_TEXT_SECRET_QUERY = [
 
 export const storeTextSecret = async (c: AppContext): Promise<Response> => {
   const input = await c.req.json<StoreTextInput>()
+  const timestamp = Date.now()
   const expiresInSeconds = ensureExpiresInSeconds(input.expiresInSeconds)
   const reads = ensureReads(input.reads)
   if (!expiresInSeconds || !reads) {
     return http.badRequest(c, 'Invalid expiration or read count.')
+  }
+  const provider = ethRpcProvider(c.env)
+  const accessPolicy = await evmAccessPolicy({
+    db: c.env.DB,
+    provider,
+    timestamp,
+    value: input.access,
+    waitUntil: task => c.executionCtx.waitUntil(task),
+  })
+  if (accessPolicy === 'invalid') {
+    return http.badRequest(c, 'Invalid EVM access policy.')
+  }
+  if (accessPolicy === 'conflict') {
+    return http.conflict(c, 'ENS name could not be resolved before creating.')
+  }
+  if (accessPolicy === 'unsupported') {
+    return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
+  }
+  if (accessPolicy === 'unavailable') {
+    return http.badGateway(c, 'Ethereum RPC is unavailable.')
+  }
+  if (accessPolicy === 'unsupported-account') {
+    return c.body(null, 400)
   }
 
   const cipherBytes = textEncoder.encode(input.cipher).byteLength
@@ -54,7 +81,6 @@ export const storeTextSecret = async (c: AppContext): Promise<Response> => {
     )
   }
 
-  const timestamp = Date.now()
   const expiresAt = timestamp + expiresInSeconds * 1000
   const secretId = randomId(SECRET_ID_BYTES)
   const trackId = randomId(TRACK_ID_BYTES)
@@ -79,6 +105,29 @@ export const storeTextSecret = async (c: AppContext): Promise<Response> => {
     readIds,
     expiresAt,
   })
+  if (accessPolicy) {
+    await d1Evm.insertPolicy({
+      db: c.env.DB,
+      secretId,
+      policy: accessPolicy,
+      createdAt: timestamp,
+    })
+    const evmIds = await d1Evm.insertReadIds({
+      db: c.env.DB,
+      secretId,
+      readIds,
+      policy: accessPolicy,
+      expiresAt,
+      createdAt: timestamp,
+    })
+
+    return c.json({
+      kind: 'text',
+      evmIds,
+      trackId,
+      expiresAt,
+    })
+  }
 
   return c.json({
     kind: 'text',

@@ -1,5 +1,4 @@
 import selfHost from '../../self-host'
-
 const MB_BYTES = 1024 * 1024
 
 export const MAX_TEXT_BYTES = selfHost.limits.HYBRID_MAX_TEXT_BYTES
@@ -12,6 +11,14 @@ export const MAX_EXPIRES_IN_SECONDS = selfHost.limits.HYBRID_MAX_SECRET_TTL_SECO
 export const PENDING_TTL_MS = selfHost.limits.API_PENDING_UPLOAD_TTL_SECONDS * 1000
 export const TRACKING_TTL_MS = selfHost.limits.API_TRACKING_TTL_SECONDS * 1000
 export const READ_ID_BYTES = 16
+export const EVM_CHALLENGE_ID_BYTES = 16
+export const EVM_CHALLENGE_NONCE_LENGTH = 22
+export const EVM_ID_BYTES = 16
+export const EVM_MAINNET_CHAIN_ID = 1
+export const EVM_CHALLENGE_TTL_MS = 5 * 60 * 1000
+export const ENS_CREATE_CACHE_MAX_AGE_MS = 60 * 60 * 1000
+export const ENS_FAILURE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+export const ENS_SUCCESS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 export const SECRET_ID_BYTES = 16
 export const TRACK_ID_BYTES = 24
 export const UPLOAD_TOKEN_BYTES = 24

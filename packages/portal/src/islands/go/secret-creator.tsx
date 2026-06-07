@@ -14,6 +14,7 @@ import { SecretDescription } from './form/secret-description'
 import { SecretInput } from './form/secret-input'
 import { useGoSecretState } from './hooks/use-go-secret-state'
 import { useSecretSubmit } from './hooks/use-secret-submit'
+import { EvmAccessPanel } from './panels/evm-access-panel'
 import { SettingsPanel } from './panels/settings-panel'
 
 export const SecretCreator = () => {
@@ -48,6 +49,9 @@ export const SecretCreator = () => {
           onExpiresChange={actions.setExpiresInSeconds}
           onReadsChange={actions.setReads}
         />
+        <div className="mt-3">
+          <EvmAccessPanel access={state.access} onAccessChange={actions.setAccess} />
+        </div>
       </div>
       <div className="mt-12 flex flex-col items-end gap-3">
         <Button

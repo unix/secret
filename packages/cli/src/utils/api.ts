@@ -71,6 +71,8 @@ type UploadRequestInit = RequestInit & {
 }
 
 const TRANSFER_CHUNK_BYTES = 64 * 1024
+const RATE_LIMIT_MESSAGE =
+  'Requests are coming in too quickly. Please wait a minute and try again.'
 
 export class ApiClientError extends Error {
   readonly code = 'API-REQUEST-FAILED'
@@ -202,6 +204,8 @@ export class ApiClient {
     response: Response,
     fallback: string,
   ): Promise<string> {
+    if (response.status === 429) return RATE_LIMIT_MESSAGE
+
     const text = await response.text()
     if (!text) return fallback
 

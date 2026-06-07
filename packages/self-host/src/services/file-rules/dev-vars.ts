@@ -1,10 +1,11 @@
-import { access, copyFile } from 'node:fs/promises'
+import { access, readFile, writeFile } from 'node:fs/promises'
 import type { SECRET_ENV } from '../../types'
 import { readEnvFile } from '../../utils/env'
 import { paths } from '../../utils/paths'
 import type { FileRule } from './types'
 
 const LABEL = 'packages/edge/.dev.vars'
+const OPTIONAL_SECRET_KEYS = ['ETH_ALCHEMY_API_KEY', 'ETH_INFURA_API_KEY'] as const
 
 const validateTarget = async (): Promise<void> => {
   return
@@ -15,7 +16,9 @@ const validateParse = async (): Promise<void> => {
 }
 
 const write = async (_secretEnv: SECRET_ENV): Promise<void> => {
-  await copyFile(paths.rootEnv, paths.edgeDevVars)
+  const contents = await readFile(paths.rootEnv, 'utf8')
+
+  await writeFile(paths.edgeDevVars, withOptionalSecrets(contents))
 }
 
 const devVarsPath = async (): Promise<string> => {
@@ -26,6 +29,27 @@ const devVarsPath = async (): Promise<string> => {
   } catch {
     return paths.rootEnv
   }
+}
+
+const withOptionalSecrets = (contents: string): string => {
+  const missing = OPTIONAL_SECRET_KEYS.filter(key => !hasEnvKey(contents, key))
+  if (missing.length === 0) return contents
+
+  const prefix = contents.replace(/\s*$/, '\n')
+  const suffix = missing.map(key => `${key}=`).join('\n')
+
+  return `${prefix}${suffix}\n`
+}
+
+const hasEnvKey = (contents: string, key: string): boolean => {
+  const pattern = new RegExp(`^${key}\\s*=`)
+
+  return contents.split(/\r?\n/).some(line => {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) return false
+
+    return pattern.test(trimmed)
+  })
 }
 
 export const devVarsRule: FileRule = {

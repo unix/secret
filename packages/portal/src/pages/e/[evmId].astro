@@ -1,0 +1,23 @@
+---
+import SecretFooter from '@/components/astro/secret-footer.astro'
+import SecretHeader from '@/components/astro/secret-header.astro'
+import SecretPageHero from '@/components/astro/secret-page-hero.astro'
+import { ReadSecretIsland } from '@/islands/read.island'
+import HeadLayout from '@/layouts/head.layout.astro'
+
+export const prerender = false
+
+const { evmId } = Astro.params
+---
+
+<HeadLayout title="Secret - Verify">
+  <main class="flex min-h-svh flex-col bg-white text-black">
+    <SecretHeader />
+    <SecretPageHero
+      title="Verify Wallet"
+      description="Confirm wallet access before revealing the secret."
+    />
+    {evmId && <ReadSecretIsland evmId={evmId} client:only="react" />}
+    <SecretFooter />
+  </main>
+</HeadLayout>

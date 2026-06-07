@@ -2,7 +2,14 @@ import type { AxiosProgressEvent } from 'axios'
 import { apiClient, responseData, transferClient } from './http'
 
 export type TextSecretResponse = {
+  readonly expiresAt: number
   readonly readIds: readonly string[]
+  readonly trackId: string
+}
+
+export type EvmTextSecretResponse = {
+  readonly evmIds: readonly string[]
+  readonly expiresAt: number
   readonly trackId: string
 }
 
@@ -13,7 +20,14 @@ export type FileInitResponse = {
 }
 
 export type FileCompleteResponse = {
+  readonly expiresAt: number
   readonly readIds: readonly string[]
+  readonly trackId: string
+}
+
+export type EvmFileCompleteResponse = {
+  readonly evmIds: readonly string[]
+  readonly expiresAt: number
   readonly trackId: string
 }
 
@@ -50,6 +64,7 @@ export type SecretResponse =
     }
 
 type CreateTextSecretInput = {
+  readonly access?: EvmAccessInput
   readonly cipher: string
   readonly plainSize: number
   readonly expiresInSeconds: number
@@ -57,6 +72,7 @@ type CreateTextSecretInput = {
 }
 
 type InitFileSecretInput = {
+  readonly access?: EvmAccessInput
   readonly chunkCount: number
   readonly chunkSize: number
   readonly encryptedManifest: string
@@ -81,11 +97,57 @@ type CompleteFileSecretInput = {
   readonly uploadToken: string
 }
 
+export type EvmAccessInput = {
+  readonly chainId: 1
+  readonly type: 'evm'
+} & (
+  | {
+      readonly address: `0x${string}`
+      readonly ens?: never
+    }
+  | {
+      readonly address?: never
+      readonly ens: string
+    }
+)
+
+export type EnsResolutionResponse = {
+  readonly address: `0x${string}` | null
+  readonly cacheHit: boolean
+  readonly error: string | null
+  readonly name: string
+  readonly resolvedAt: number
+  readonly status: 'resolved' | 'unresolved' | 'invalid' | 'error'
+}
+
+export type EvmChallengeResponse = {
+  readonly challengeId: string
+  readonly chainId: number
+  readonly domain: string
+  readonly expiresAt: string
+  readonly issuedAt: string
+  readonly nonce: string
+  readonly statement: string
+  readonly uri: string
+  readonly version: '1'
+}
+
+export type EvmVerifyResponse = {
+  readonly readId: string
+}
+
+type CreateEvmChallengeInput = {
+  readonly origin: string
+}
+
 export const createTextSecret = async (
   input: CreateTextSecretInput,
-): Promise<TextSecretResponse> => {
+): Promise<TextSecretResponse | EvmTextSecretResponse> => {
   return responseData(
-    apiClient.post<TextSecretResponse>('/secrets/text', input),
+    apiClient.post<TextSecretResponse | EvmTextSecretResponse>(
+      '/secrets/text',
+      input,
+    ),
     'Unable to create text secret.',
   )
 }
@@ -115,13 +177,72 @@ export const uploadEncryptedFile = async ({
 export const completeFileSecret = async ({
   secretId,
   uploadToken,
-}: CompleteFileSecretInput): Promise<FileCompleteResponse> => {
+}: CompleteFileSecretInput): Promise<
+  FileCompleteResponse | EvmFileCompleteResponse
+> => {
   return responseData(
-    apiClient.post<FileCompleteResponse>(
+    apiClient.post<FileCompleteResponse | EvmFileCompleteResponse>(
       `/secrets/files/${encodeURIComponent(secretId)}/complete`,
       { uploadToken },
     ),
     'Unable to complete file upload.',
+  )
+}
+
+export const createEvmChallenge = async (
+  evmId: string,
+  input: CreateEvmChallengeInput,
+): Promise<EvmChallengeResponse> => {
+  return responseData(
+    apiClient.post<EvmChallengeResponse>(
+      `/chains/evm/${encodeURIComponent(evmId)}/challenge`,
+      input,
+    ),
+    'Unable to create EVM verification challenge.',
+  )
+}
+
+export const resolveEnsName = async (
+  name: string,
+): Promise<EnsResolutionResponse> => {
+  return responseData(
+    apiClient.post<EnsResolutionResponse>('/chains/evm/resolve-ens', { name }),
+    'Unable to resolve ENS name.',
+  )
+}
+
+export const verifyEvmAddressStatus = async (
+  address: `0x${string}`,
+): Promise<void> => {
+  await responseData(
+    apiClient.get<void>(
+      `/chains/evm/addresses/${encodeURIComponent(address)}/status`,
+    ),
+    'Contract addresses and smart wallets are not supported yet.',
+  )
+}
+
+export const verifyEvmAccess = async ({
+  challengeId,
+  evmId,
+  message,
+  signature,
+}: {
+  readonly challengeId: string
+  readonly evmId: string
+  readonly message: string
+  readonly signature: string
+}): Promise<EvmVerifyResponse> => {
+  return responseData(
+    apiClient.post<EvmVerifyResponse>(
+      `/chains/evm/${encodeURIComponent(evmId)}/verify`,
+      {
+        challengeId,
+        message,
+        signature,
+      },
+    ),
+    'Unable to verify EVM access.',
   )
 }
 
