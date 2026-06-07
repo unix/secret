@@ -53,7 +53,7 @@ export const SecretCreator = () => {
           <EvmAccessPanel access={state.access} onAccessChange={actions.setAccess} />
         </div>
       </div>
-      <div className="mt-12 flex flex-col items-end gap-3">
+      <div className="mt-6 flex flex-col items-end gap-3">
         <Button
           type="button"
           size="lg"

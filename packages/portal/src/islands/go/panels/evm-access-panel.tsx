@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Cancel01Icon, ReloadIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { getAddress } from 'viem'
@@ -113,9 +113,11 @@ const historyMatchDescription = (match: EvmAccessHistoryMatch): string | null =>
 }
 
 export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) => {
+  const confirmButtonFrameRef = useRef<HTMLSpanElement>(null)
   const [open, setOpen] = useState(false)
   const [verificationStage, setVerificationStage] =
     useState<VerificationStage>('idle')
+  const [confirmButtonWidth, setConfirmButtonWidth] = useState<number | null>(null)
   const [historyMatches, setHistoryMatches] = useState<
     readonly EvmAccessHistoryMatch[]
   >([])
@@ -167,6 +169,18 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
       cancelled = true
     }
   }, [open, value, verificationStage])
+
+  useLayoutEffect(() => {
+    const button = confirmButtonFrameRef.current?.firstElementChild
+    if (!(button instanceof HTMLElement)) return
+
+    const width = Math.ceil(button.getBoundingClientRect().width)
+    setConfirmButtonWidth(current => {
+      if (current === width) return current
+
+      return width
+    })
+  }, [open, verificationStage])
 
   const error = useMemo(() => addressError(value, ensState), [ensState, value])
   const address = useMemo(() => normalizedAddress(value), [value])
@@ -376,17 +390,15 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
                         return (
                           <div
                             key={match.key}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => selectHistoryMatch(match)}
-                            onKeyDown={event => {
-                              if (event.key !== 'Enter' && event.key !== ' ') return
-
-                              event.preventDefault()
-                              selectHistoryMatch(match)
-                            }}
-                            className="group flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-zinc-50">
-                            <span className="min-w-0 flex-1">
+                            className="group flex w-full items-start gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-50">
+                            <button
+                              type="button"
+                              onPointerDown={event => {
+                                event.preventDefault()
+                                selectHistoryMatch(match)
+                              }}
+                              onClick={() => selectHistoryMatch(match)}
+                              className="min-w-0 flex-1 text-left">
                               <span className="block truncate font-mono text-xs leading-5 text-zinc-950">
                                 {match.value}
                               </span>
@@ -395,11 +407,15 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
                                   {description}
                                 </span>
                               )}
-                            </span>
+                            </button>
                             <button
                               type="button"
                               aria-label={`Delete ${match.value} from history`}
                               title="Delete"
+                              onPointerDown={event => {
+                                event.preventDefault()
+                                event.stopPropagation()
+                              }}
                               onClick={event => {
                                 event.preventDefault()
                                 event.stopPropagation()
@@ -448,7 +464,7 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -457,16 +473,25 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
                 className="border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950">
                 Cancel
               </Button>
-              <Button type="button" disabled={!canConfirm} onClick={confirm}>
-                {isLoading && (
-                  <HugeiconsIcon
-                    icon={ReloadIcon}
-                    strokeWidth={1.7}
-                    className="animate-spin"
-                  />
-                )}
-                {buttonLabel(verificationStage)}
-              </Button>
+              <span
+                ref={confirmButtonFrameRef}
+                className="inline-flex overflow-hidden rounded-md transition-[width] duration-200 ease-out"
+                style={
+                  confirmButtonWidth === null
+                    ? undefined
+                    : { width: confirmButtonWidth }
+                }>
+                <Button type="button" disabled={!canConfirm} onClick={confirm}>
+                  {isLoading && (
+                    <HugeiconsIcon
+                      icon={ReloadIcon}
+                      strokeWidth={1.7}
+                      className="animate-spin"
+                    />
+                  )}
+                  {buttonLabel(verificationStage)}
+                </Button>
+              </span>
             </div>
           </div>
         </div>

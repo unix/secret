@@ -39,7 +39,8 @@ const DECRYPTION_STEPS = 12
 const USED_SECRET_ERROR = 'Secret link has already been used.'
 const EXPIRED_SECRET_ERROR = 'Secret has expired.'
 const WALLET_UNAVAILABLE_ERROR =
-  'No Ethereum wallet was detected. Install or unlock a wallet, then try again.'
+  'This secret requires Ethereum address verification. To continue, sign a wallet message with the required ETH address.\nNo Ethereum wallet environment was detected in this browser. Enable your wallet extension, or install an Ethereum wallet and try again.'
+const WALLET_UNAVAILABLE_TITLE = 'Ethereum wallet required'
 const WALLET_CONNECT_ERROR = 'Unable to connect to Ethereum wallet.'
 const SIGNATURE_CANCELLED_ERROR = 'You cancelled the signature request.'
 const WALLET_CONNECTION_CANCELLED_ERROR = 'You cancelled the wallet connection.'
@@ -171,6 +172,10 @@ const formatFileMeta = (manifest: FileManifest): string => {
 
 const isUnavailableSecretError = (message: string): boolean => {
   return message === USED_SECRET_ERROR || message === EXPIRED_SECRET_ERROR
+}
+
+const isTerminalRevealError = (message: string): boolean => {
+  return isUnavailableSecretError(message) || message === WALLET_UNAVAILABLE_ERROR
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -328,13 +333,30 @@ const StatusMessage = ({ status }: { readonly status: ReadStatus }) => {
     )
   }
 
+  if (status.message === WALLET_UNAVAILABLE_ERROR) {
+    return (
+      <div role="alert" className="mx-auto max-w-[480px] space-y-7">
+        <div className="text-center">
+          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 font-mono text-sm leading-5 text-red-500">
+            {WALLET_UNAVAILABLE_TITLE}
+          </span>
+        </div>
+        <div className="space-y-2 text-left text-sm leading-5 text-zinc-500">
+          {status.message.split('\n').map(message => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (status.kind === 'error' || status.kind === 'warning') {
     const className = status.kind === 'error' ? 'text-red-700' : 'text-amber-700'
 
     return (
       <div
         role="alert"
-        className={`mx-auto max-w-[520px] text-center text-xs leading-5 ${className}`}>
+        className={`mx-auto max-w-[420px] whitespace-pre-line text-center text-xs leading-5 ${className}`}>
         {status.message}
       </div>
     )
@@ -732,7 +754,7 @@ export const ReadSecretIsland = (props: ReadSecretIslandProps) => {
         params: { error_type: analyticsErrorType(error) },
       })
       setStatus({ kind: readStatusKind(message), message })
-      setUsed(isUnavailableSecretError(message))
+      setUsed(isTerminalRevealError(message))
     } finally {
       setBusy(false)
     }
