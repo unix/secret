@@ -20,7 +20,7 @@
   "ratelimits": [
     {
       "name": "CREATE_SECRET_LIMITER",
-      "namespace_id": "secret-edge-create",
+      "namespace_id": "1209771371",
       "simple": {
         "limit": 15,
         "period": 60,
@@ -28,7 +28,7 @@
     },
     {
       "name": "CHAIN_LIMITER",
-      "namespace_id": "secret-edge-chain",
+      "namespace_id": "74946248",
       "simple": {
         "limit": 20,
         "period": 60,
