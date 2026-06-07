@@ -17,7 +17,17 @@ Follow this sequence to deploy your own instance:
    - Create or choose the R2 bucket and D1 database, then copy their names, IDs, and access keys into `.env`.
    - Confirm the client and API domains in `secret.config.json`, and set any deployment limits.
 
-3. Run the setup command to check the provided configuration and provision any required deployment resources:
+3. Configure an Ethereum RPC provider if you want to use EVM address or ENS-based access checks:
+
+   ```sh
+   ETH_INFURA_API_KEY=
+   # or
+   ETH_ALCHEMY_API_KEY=
+   ```
+
+   Secret supports either [Infura](https://www.infura.io/) or [Alchemy](https://www.alchemy.com/) for Ethereum mainnet RPC calls. For most self-hosted deployments, Infura is the recommended default: create an Infura account, generate an Ethereum Mainnet API key, and add it to `ETH_INFURA_API_KEY`. The free quota is normally enough for typical personal or small-team usage. Alchemy is also supported by setting `ETH_ALCHEMY_API_KEY`; if both keys are configured, the API uses Alchemy first.
+
+4. Run the setup command to check the provided configuration and provision any required deployment resources:
 
    ```sh
    pnpm release:setup
@@ -29,13 +39,13 @@ Follow this sequence to deploy your own instance:
    configuration fails, the setup command stops so you can fix the Wrangler
    session, Cloudflare account, or R2 bucket configuration before deploying.
 
-4. Deploy the server-side Workers:
+5. Deploy the server-side Workers:
 
    ```sh
    pnpm release:edge
    ```
 
-5. Deploy the client portal:
+6. Deploy the client portal:
 
    ```sh
    pnpm release:portal
@@ -57,12 +67,12 @@ Assumptions:
 - File storage assumes R2 Standard storage and the default maximum retained lifetime of about 25 hours: up to 1 hour from `HYBRID_MAX_SECRET_TTL_SECONDS`, plus 24 hours from `API_TRACKING_TTL_SECONDS`.
 - Portal static asset requests are normally free. Requests that invoke Worker code, SSR, or API routes count as Workers requests.
 
-| Monthly interactions | Average interactions per day | Estimated usage | Recommended tier |
-| -------------------: | ---------------------------: | --------------- | ---------------- |
-| 1,000                | About 34                     | Even if every interaction is a file secret, usage is roughly 4,000 Worker requests, 1,000 R2 Class A operations, and 2,000 R2 Class B operations. | Workers Free is usually enough. D1 and R2 should normally remain within included free usage. |
-| 10,000               | About 334                    | In an all-file scenario, usage is roughly 40,000 Worker requests, 10,000 R2 Class A operations, and 20,000 R2 Class B operations. | Workers Free is usually enough. R2 operations are well within the free tier, and storage is usually within or near the free tier unless files are large and retained close to the maximum lifetime. |
-| 100,000              | About 3,334                  | Text-heavy usage is roughly 200,000 Worker requests. All-file usage is roughly 400,000 Worker requests, 100,000 R2 Class A operations, and 200,000 R2 Class B operations. | Workers Free is still usually viable. D1 writes are the main number to watch, but this volume is normally below the Free daily limits when traffic is evenly distributed. |
-| 1,000,000            | About 33,334                 | Text-heavy usage is roughly 2,000,000 Worker requests. All-file usage is roughly 4,000,000 Worker requests, 1,000,000 R2 Class A operations, and 2,000,000 R2 Class B operations. | Plan for Workers Paid. The main reason is D1 Free's daily write limit, which can be reached before Workers or R2 become expensive. Paid-plan included D1 usage is usually enough for this scale. |
+| Monthly interactions | Average interactions per day | Estimated usage                                                                                                                                                                   | Recommended tier                                                                                                                                                                                    |
+| -------------------: | ---------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                1,000 |                     About 34 | Even if every interaction is a file secret, usage is roughly 4,000 Worker requests, 1,000 R2 Class A operations, and 2,000 R2 Class B operations.                                 | Workers Free is usually enough. D1 and R2 should normally remain within included free usage.                                                                                                        |
+|               10,000 |                    About 334 | In an all-file scenario, usage is roughly 40,000 Worker requests, 10,000 R2 Class A operations, and 20,000 R2 Class B operations.                                                 | Workers Free is usually enough. R2 operations are well within the free tier, and storage is usually within or near the free tier unless files are large and retained close to the maximum lifetime. |
+|              100,000 |                  About 3,334 | Text-heavy usage is roughly 200,000 Worker requests. All-file usage is roughly 400,000 Worker requests, 100,000 R2 Class A operations, and 200,000 R2 Class B operations.         | Workers Free is still usually viable. D1 writes are the main number to watch, but this volume is normally below the Free daily limits when traffic is evenly distributed.                           |
+|            1,000,000 |                 About 33,334 | Text-heavy usage is roughly 2,000,000 Worker requests. All-file usage is roughly 4,000,000 Worker requests, 1,000,000 R2 Class A operations, and 2,000,000 R2 Class B operations. | Plan for Workers Paid. The main reason is D1 Free's daily write limit, which can be reached before Workers or R2 become expensive. Paid-plan included D1 usage is usually enough for this scale.    |
 
 Approximate free-tier boundary:
 
@@ -114,6 +124,13 @@ For example, if the largest value in `CLIENT_VALID_EXPIRATIONS_SECONDS` is great
 | `R2_BUCKET_NAME`       | R2 bucket that stores encrypted file payloads.                                                     | Cloudflare Dashboard -> R2 -> Buckets, or `pnpm wrangler r2 bucket list`.                                             |
 | `D1_DATABASE_ID`       | D1 database ID for secret metadata, read state, and tracking data.                                 | Cloudflare Dashboard -> D1 -> database details, or `pnpm wrangler d1 info <D1_DATABASE_NAME> --json` and read `uuid`. |
 | `D1_DATABASE_NAME`     | D1 database name used by Wrangler and the `wrangler.jsonc` binding.                                | Cloudflare Dashboard -> D1, or `pnpm wrangler d1 list`.                                                               |
+
+## Optional Environment Variables
+
+| Variable              | Purpose                                                                               | Where to find it                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ETH_INFURA_API_KEY`  | Infura Ethereum Mainnet RPC API key used for EVM address and ENS-based access checks. | Register or sign in at [Infura](https://www.infura.io/), create an Ethereum Mainnet API key, and copy the key into `.env`. Recommended by default.   |
+| `ETH_ALCHEMY_API_KEY` | Alchemy Ethereum Mainnet RPC API key used for the same EVM address and ENS checks.    | Register or sign in at [Alchemy](https://www.alchemy.com/), create an Ethereum Mainnet app, and copy the API key into `.env`. Used first if present. |
 
 ## Protocol Boundaries
 
