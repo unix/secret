@@ -39,6 +39,22 @@ import HeadLayout from '@/layouts/head.layout.astro'
           it. The same command can create text secrets, create file secrets, and tune read
           limits or expiration time for a quick test.
         </p>
+        <figure data-type="image-figure">
+          <img
+            src="/illustrations/terminal-1-510.jpg"
+            srcset="/illustrations/terminal-1-510.jpg 510w, /illustrations/terminal-1-1020.jpg 1020w"
+            sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+            width="1020"
+            height="638"
+            alt="Minimal diagram of a file secret being encrypted into a manifest and chunks from a terminal client."
+            decoding="async"
+            draggable="false"
+          />
+          <figcaption>
+            The terminal client encrypts file metadata and chunks before the API receives
+            storage material.
+          </figcaption>
+        </figure>
         <pre><code><span class="text-zinc-500"># Create a text secret without installing.</span>
 <span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span>
 
@@ -85,6 +101,22 @@ import HeadLayout from '@/layouts/head.layout.astro'
           printed to the terminal. Files first show encrypted manifest details after
           local decryption, then ask before downloading and decrypting the object.
         </p>
+        <figure data-type="image-figure">
+          <img
+            src="/illustrations/terminal-2-510.jpg"
+            srcset="/illustrations/terminal-2-510.jpg 510w, /illustrations/terminal-2-1020.jpg 1020w"
+            sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+            width="1020"
+            height="638"
+            alt="Minimal diagram of a terminal reveal flow with a URL fragment boundary."
+            decoding="async"
+            draggable="false"
+          />
+          <figcaption>
+            The read id can reach the API, while the fragment secret stays with the local
+            reveal command.
+          </figcaption>
+        </figure>
         <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">reveal</span> <span class="text-emerald-700">'https://secret.witt.im/s/read_123#access_secret'</span>
 
 <span class="text-zinc-500"># The CLI also accepts the compact readId.secret form.</span>
@@ -130,6 +162,22 @@ import HeadLayout from '@/layouts/head.layout.astro'
           >. The package is the stable boundary for local encryption, decryption, and
           access URL encoding.
         </p>
+        <figure data-type="image-figure">
+          <img
+            src="/illustrations/terminal-3-510.jpg"
+            srcset="/illustrations/terminal-3-510.jpg 510w, /illustrations/terminal-3-1020.jpg 1020w"
+            sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+            width="1020"
+            height="638"
+            alt="Minimal diagram of a custom terminal app built around a reusable cipher package."
+            decoding="async"
+            draggable="false"
+          />
+          <figcaption>
+            A custom CLI can treat the cipher package as the stable cryptographic core and
+            build API behavior around it.
+          </figcaption>
+        </figure>
         <ol>
           <li>
             Install <code>secret-cipher</code> and use <code>sealText</code>,

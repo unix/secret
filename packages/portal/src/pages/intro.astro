@@ -52,6 +52,22 @@ import HeadLayout from '@/layouts/head.layout.astro'
               rel="noreferrer">SECURITY_MODEL.md</a
             >.
           </div>
+          <figure data-type="image-figure">
+            <img
+              src="/illustrations/intro-1-510.jpg"
+              srcset="/illustrations/intro-1-510.jpg 510w, /illustrations/intro-1-1020.jpg 1020w"
+              sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+              width="1020"
+              height="574"
+              alt="Minimal diagram of the browser, cipher package, API, and storage layers."
+              decoding="async"
+              draggable="false"
+            />
+            <figcaption>
+              The browser owns the key; the API and storage layers only coordinate encrypted
+              payloads and lifecycle state.
+            </figcaption>
+          </figure>
           <p>
             Secret is split into three layers. The portal is a browser client that
             owns the user experience and calls the <code>cipher</code> package locally.
@@ -133,6 +149,22 @@ cipher = AES-GCM.encrypt(key, iv, plaintext, "secret-cipher:text")</code></pre>
             <code>chunkCount</code>. It is encrypted separately from the file bytes,
             so even file metadata is not stored in plaintext by the API.
           </p>
+          <figure data-type="image-figure">
+            <img
+              src="/illustrations/intro-2-510.jpg"
+              srcset="/illustrations/intro-2-510.jpg 510w, /illustrations/intro-2-1020.jpg 1020w"
+              sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+              width="1020"
+              height="574"
+              alt="Minimal diagram of a file becoming an encrypted manifest and encrypted chunks."
+              decoding="async"
+              draggable="false"
+            />
+            <figcaption>
+              File metadata becomes an encrypted manifest, while file bytes move as separate
+              encrypted chunks.
+            </figcaption>
+          </figure>
           <p>
             Chunks default to <code>8 MiB</code>. The file key and manifest key are
             derived from the same access secret with different
@@ -360,6 +392,22 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
             current control of the Ethereum mainnet address selected by the sender
             before the server releases the underlying <code>readId</code>.
           </p>
+          <figure data-type="image-figure">
+            <img
+              src="/illustrations/intro-3-510.jpg"
+              srcset="/illustrations/intro-3-510.jpg 510w, /illustrations/intro-3-1020.jpg 1020w"
+              sizes="(max-width: 768px) calc((100vw - 32px) * 0.65), (max-width: 896px) calc((100vw - 112px) * 0.65), 510px"
+              width="1020"
+              height="574"
+              alt="Minimal diagram of a wallet signature passing an access gate before a read token."
+              decoding="async"
+              draggable="false"
+            />
+            <figcaption>
+              The wallet signature gates access to a read link; it does not become part of
+              the encryption material.
+            </figcaption>
+          </figure>
           <p>
             Conceptually, this is a possession check: the opener signs a short-lived
             wallet message, the server verifies that the signature was produced by
