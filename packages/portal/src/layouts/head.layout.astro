@@ -1,14 +1,17 @@
 ---
 import GoogleAnalytics from '@/components/astro/GoogleAnalytics.astro'
+import GeistLatinCriticalFont from '@/components/astro/critical-fonts/geist-latin.astro'
 import '@/styles/global.css'
 import selfHost from '../../self-host'
 
 interface Props {
+  criticalFontDisabled?: boolean | undefined
   title?: string | undefined
   description?: string | undefined
 }
 
 const {
+  criticalFontDisabled = false,
   title = 'Secret - sharing and safer sharing',
   description = 'Share secrets that stay secret. Send encrypted text and files without giving the server the key.',
 } = Astro.props
@@ -70,6 +73,7 @@ const ga4 = selfHost.configs.ga4
     <meta property="og:type" content="website" />
     {ga4 ? <GoogleAnalytics measurementId={ga4} /> : null}
 
+    {criticalFontDisabled ? null : <GeistLatinCriticalFont />}
     <slot name="head" />
   </head>
   <body>

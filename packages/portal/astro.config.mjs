@@ -27,6 +27,13 @@ export default defineConfig({
   },
 
   vite: {
+    ssr: {
+      noExternal: [
+        '@fontsource-variable/geist',
+        '@fontsource-variable/geist-mono',
+        '@fontsource-variable/noto-sans-sc',
+      ],
+    },
     plugins: [/** @type {any} */ (tailwindcss())],
     server: {
       proxy: {
