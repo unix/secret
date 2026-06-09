@@ -16,3 +16,64 @@ const criticalFontCss = `
 <Fragment
   set:html={`<style data-critical-font="geist-latin">${criticalFontCss}</style>`}
 />
+
+<script is:inline>
+  ;(() => {
+    const notoSansScPreloadKey = 'secret:portal:noto-sans-sc-preloaded'
+    const platform = navigator.userAgentData?.platform ?? navigator.platform ?? ''
+    const userAgent = navigator.userAgent ?? ''
+    const isWindows = /win/i.test(`${platform} ${userAgent}`)
+
+    if (!isWindows || !document.fonts?.load) return
+
+    const isNotoSansScPreloaded = () => {
+      try {
+        return window.sessionStorage.getItem(notoSansScPreloadKey) === '1'
+      } catch {
+        return false
+      }
+    }
+
+    const markNotoSansScPreloaded = () => {
+      try {
+        window.sessionStorage.setItem(notoSansScPreloadKey, '1')
+      } catch {}
+    }
+
+    const loadNotoSansSc = () => {
+      if (isNotoSansScPreloaded() || window.__notoSansScPreloadState === 'loading')
+        return
+
+      window.__notoSansScPreloadState = 'loading'
+      document.fonts
+        .load('400 16px "Noto Sans SC Variable"', '你好世界中文密码')
+        .then(fontFaces => {
+          if (fontFaces.length === 0) {
+            window.__notoSansScPreloadState = 'idle'
+            return
+          }
+
+          markNotoSansScPreloaded()
+          window.__notoSansScPreloadState = 'loaded'
+        })
+        .catch(() => {
+          window.__notoSansScPreloadState = 'idle'
+        })
+    }
+
+    const scheduleNotoSansScLoad = () => {
+      if (isNotoSansScPreloaded()) return
+
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(loadNotoSansSc, { timeout: 2000 })
+        return
+      }
+
+      window.setTimeout(loadNotoSansSc, 1200)
+    }
+
+    if (document.readyState === 'complete') return scheduleNotoSansScLoad()
+
+    window.addEventListener('load', scheduleNotoSansScLoad, { once: true })
+  })()
+</script>
