@@ -43,7 +43,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
           <h2 id="system-architecture">System architecture</h2>
           <div
             role="alert"
-            class="mb-2 mt-4 rounded-md bg-amber-50 px-3 py-2.5 text-sm leading-6 text-amber-900">
+            class="mt-4 mb-2 rounded-md bg-amber-50 px-3 py-2.5 text-sm leading-6 text-amber-900">
             If you need the concise security model or want to begin an audit, refer
             to
             <a
@@ -64,8 +64,8 @@ import HeadLayout from '@/layouts/head.layout.astro'
               draggable="false"
             />
             <figcaption>
-              The browser owns the key; the API and storage layers only coordinate encrypted
-              payloads and lifecycle state.
+              The browser owns the key; the API and storage layers only coordinate
+              encrypted payloads and lifecycle state.
             </figcaption>
           </figure>
           <p>
@@ -161,8 +161,8 @@ cipher = AES-GCM.encrypt(key, iv, plaintext, "secret-cipher:text")</code></pre>
               draggable="false"
             />
             <figcaption>
-              File metadata becomes an encrypted manifest, while file bytes move as separate
-              encrypted chunks.
+              File metadata becomes an encrypted manifest, while file bytes move as
+              separate encrypted chunks.
             </figcaption>
           </figure>
           <p>
@@ -404,8 +404,8 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
               draggable="false"
             />
             <figcaption>
-              The wallet signature gates access to a read link; it does not become part of
-              the encryption material.
+              The wallet signature gates access to a read link; it does not become
+              part of the encryption material.
             </figcaption>
           </figure>
           <p>
@@ -438,29 +438,28 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
           </p>
           <h3>Security value and limits</h3>
           <p>
-            This is especially useful when transport trust is imperfect. TLS is
-            still required, but a network intermediary, proxy, or compromised TLS
-            path should not be able to silently turn an ETH-gated link into a usable
-            read link without a valid wallet signature for the configured address.
-            OWASP describes improper certificate validation and other
+            This is especially useful when transport trust is imperfect. TLS is still
+            required, but a network intermediary, proxy, or compromised TLS path
+            should not be able to silently turn an ETH-gated link into a usable read
+            link without a valid wallet signature for the configured address. OWASP
+            describes improper certificate validation and other
             <a
               href="https://mas.owasp.org/MASWE-0052/"
               target="_blank"
               rel="noreferrer">machine-in-the-middle risks</a
             >
-            as attacks on transport trust; ETH verification adds a separate
-            application-layer proof that the opener intentionally participated in
-            this specific access attempt.
+            as attacks on transport trust; ETH verification adds a separate application-layer
+            proof that the opener intentionally participated in this specific access attempt.
           </p>
           <p>
-            The boundary is deliberately narrow. ETH verification can confirm
-            control of a wallet address at the time of opening, reduce replay by
-            using expiring single-use challenges, and bind the signed intent to the
-            current domain and URI. It does not identify the human behind the wallet,
-            prevent a valid wallet owner from forwarding plaintext after decryption,
-            protect a compromised browser or wallet, or replace HTTPS and careful
-            certificate validation. It is an access-control check for who may open
-            the secret, not a second encryption scheme for the secret itself.
+            The boundary is deliberately narrow. ETH verification can confirm control
+            of a wallet address at the time of opening, reduce replay by using
+            expiring single-use challenges, and bind the signed intent to the current
+            domain and URI. It does not identify the human behind the wallet, prevent
+            a valid wallet owner from forwarding plaintext after decryption, protect
+            a compromised browser or wallet, or replace HTTPS and careful certificate
+            validation. It is an access-control check for who may open the secret,
+            not a second encryption scheme for the secret itself.
           </p>
         </section>
 
@@ -518,6 +517,37 @@ tracking ttl after destroy/expire: 24 hours</code></pre>
               >
             </li>
           </ol>
+        </section>
+
+        <section>
+          <h2 id="design">Design</h2>
+          <p>
+            Every visual decision in Secret is generated from
+            <a href="https://unui.cc" target="_blank" rel="noopener noreferrer"
+              ><em>unUI</em></a
+            >. The page structure, hierarchy, illustration direction, and interface
+            details begin as <em>unUI</em> design evidence before they are shaped into
+            the product experience.
+          </p>
+          <p>
+            This keeps the design source explicit and traceable: <em>unUI</em>
+            generates the design language, while Secret turns that generated direction
+            into a stable, maintainable product page.
+          </p>
+          <p>
+            <a
+              href="https://unui.cc"
+              rel="noopener noreferrer"
+              style="display:inline-flex;align-items:center;gap:6px;border:1px solid #e5e5e5;border-radius:999px;background:#111;padding:4px 9px;color:#fff;text-decoration:none;font:500 12px system-ui,sans-serif;"
+              ><img
+                src="https://unui.cc/logo-options/unui-logo-black-bg.svg"
+                alt=""
+                width="14"
+                height="14"
+                style="margin:0;width:14px;height:14px;max-width:14px;border-radius:0;"
+              />Design evidence from unUI</a
+            >
+          </p>
         </section>
       </div>
     </PostContent>
