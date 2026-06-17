@@ -1,5 +1,7 @@
 # Secret
 
+[![Design evidence from unUI](https://unui.cc/badges/design-evidence-from-unui.svg)](https://unui.cc)
+
 Client-side encrypted, self-hostable secret sharing for text and files.
 
 Secret is a zero-knowledge sharing tool for short-lived private text and files.
