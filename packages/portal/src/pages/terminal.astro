@@ -14,7 +14,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
       description="Create, reveal, and track zero-knowledge secrets from a command line while keeping encryption on the client side."
     />
 
-    <PostContent>
+    <PostContent contentClass="[font-variant-ligatures:none]">
       <p>
         <a href="/">Secret</a> is a short-lived sharing system for private text and files.
         The product model is intentionally small: clients encrypt data locally, the API
@@ -51,21 +51,21 @@ import HeadLayout from '@/layouts/head.layout.astro'
             draggable="false"
           />
           <figcaption>
-            The terminal client encrypts file metadata and chunks before the API receives
-            storage material.
+            The terminal client encrypts file metadata and chunks before the API
+            receives storage material.
           </figcaption>
         </figure>
         <pre><code><span class="text-zinc-500"># Create a text secret without installing.</span>
 <span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span>
 
 <span class="text-zinc-500"># Create 3 read links that expire in 15 minutes.</span>
-<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span>&#32;<span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span>&#32;<span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span>
 
 <span class="text-zinc-500"># Create a file secret for a quick test.</span>
 <span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./incident-notes.txt</span>
 
 <span class="text-zinc-500"># Create a file secret with 5 read links and a 1 hour TTL.</span>
-<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./archive.zip</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">5</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">3600</span></code></pre>
+<span class="text-violet-700">npx</span> <span class="text-zinc-950">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./archive.zip</span>&#32;<span class="text-amber-700">--links</span> <span class="text-emerald-700">5</span>&#32;<span class="text-amber-700">--expiration</span> <span class="text-emerald-700">3600</span></code></pre>
         <p>
           The main command prompts for the secret value, encrypts it locally, creates
           one or more read links, and saves enough local tracking metadata for later
@@ -86,7 +86,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
 <span class="text-violet-700">secret</span> <span class="text-amber-700">-f</span> <span class="text-sky-700">./incident-notes.txt</span>
 
 <span class="text-zinc-500"># Create 3 read links that expire in 15 minutes.</span>
-<span class="text-violet-700">secret</span> <span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span> <span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span></code></pre>
+<span class="text-violet-700">secret</span>&#32;<span class="text-amber-700">--links</span> <span class="text-emerald-700">3</span>&#32;<span class="text-amber-700">--expiration</span> <span class="text-emerald-700">900</span></code></pre>
         <p>
           Files use the same model with chunk encryption and encrypted file metadata.
           The API receives encrypted bytes and never sees the original filename,
@@ -113,8 +113,8 @@ import HeadLayout from '@/layouts/head.layout.astro'
             draggable="false"
           />
           <figcaption>
-            The read id can reach the API, while the fragment secret stays with the local
-            reveal command.
+            The read id can reach the API, while the fragment secret stays with the
+            local reveal command.
           </figcaption>
         </figure>
         <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">reveal</span> <span class="text-emerald-700">'https://secret.witt.im/s/read_123#access_secret'</span>
@@ -138,17 +138,58 @@ import HeadLayout from '@/layouts/head.layout.astro'
           and tracking URLs.
         </p>
         <pre><code><span class="text-violet-700">secret</span> <span class="text-sky-700">config</span> <span class="text-zinc-400">\</span>
-  <span class="text-amber-700">--api</span> <span class="text-emerald-700">https://secret-api.example.com</span> <span class="text-zinc-400">\</span>
-  <span class="text-amber-700">--portal</span> <span class="text-emerald-700">https://secret.example.com</span>
+&#32;&#32;<span class="text-amber-700">--api</span> <span class="text-emerald-700">https://secret-api.example.com</span> <span class="text-zinc-400">\</span>
+&#32;&#32;<span class="text-amber-700">--portal</span> <span class="text-emerald-700">https://secret.example.com</span>
 
 <span class="text-zinc-500"># Local development hosts are normalized to http.</span>
-<span class="text-violet-700">secret</span> <span class="text-sky-700">config</span> <span class="text-amber-700">--api</span> <span class="text-emerald-700">localhost:3001</span> <span class="text-amber-700">--portal</span> <span class="text-emerald-700">localhost:3000</span></code></pre>
+<span class="text-violet-700">secret</span> <span class="text-sky-700">config</span>&#32;<span class="text-amber-700">--api</span> <span class="text-emerald-700">localhost:3001</span>&#32;<span class="text-amber-700">--portal</span> <span class="text-emerald-700">localhost:3000</span></code></pre>
         <p>
           Origins are normalized before saving. A host without a protocol defaults to <code
             >https</code
           >, except localhost-style hosts, which default to
           <code>http</code>. The config is stored in the user home directory under
           <code>.secret-cli/config</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Agent</h2>
+        <p>
+          An agent can operate the Secret CLI or a custom command-line client, but
+          you should not let an agent handle the plaintext. A core reason to use
+          Secret is to keep sensitive information away from third parties. Once a
+          secret is placed in a prompt, tool argument, or agent-readable file, it has
+          already crossed Secret's security boundary and may appear in conversation
+          history, tool traces, logs, archives, backups, or provider storage.
+          Client-side encryption and a zero-knowledge server cannot undo that
+          disclosure.
+        </p>
+        <p>
+          Recent incidents show how easily apparently limited sharing can expand. In
+          July 2026, publicly shared Claude conversations surfaced in Google Search;
+          <a
+            href="https://fortune.com/2026/07/27/a-trove-of-users-seemingly-private-conversations-with-anthropics-claude-ai-chatbot-showed-up-in-google-search-results/"
+            >reporting described cryptocurrency keys and personal details among the
+            exposed material</a
+          >. In July 2025, shared ChatGPT conversations were also indexed by search
+          engines;
+          <a
+            href="https://techcrunch.com/2025/07/31/your-public-chatgpt-queries-are-getting-indexed-by-google-and-other-search-engines/"
+            >OpenAI ended the discoverability experiment because people could
+            accidentally share information they did not intend to make public</a
+          >. These incidents affected conversations whose users had created public
+          share links, not private chats that had never been shared, but they show
+          why a transcript containing a secret should never be treated as a safe
+          vault.
+        </p>
+        <p>
+          The safest default is to run <code>secret</code> yourself and enter sensitive
+          values only at its local prompt. Avoid asking an agent to call
+          <code>secret</code>, passing secrets through prompts or tool arguments, or
+          letting an agent read files containing them. If automation is unavoidable,
+          design the workflow so the agent can trigger only an audited local wrapper
+          while the plaintext is supplied out of band and never enters the agent
+          context.
         </p>
       </section>
 
@@ -174,8 +215,8 @@ import HeadLayout from '@/layouts/head.layout.astro'
             draggable="false"
           />
           <figcaption>
-            A custom CLI can treat the cipher package as the stable cryptographic core and
-            build API behavior around it.
+            A custom CLI can treat the cipher package as the stable cryptographic
+            core and build API behavior around it.
           </figcaption>
         </figure>
         <ol>
@@ -190,8 +231,8 @@ import HeadLayout from '@/layouts/head.layout.astro'
           </li>
           <li>
             Add an origin configuration command equivalent to
-            <code>secret config --api --portal</code> so self-hosted users can target their
-            own deployment.
+            <code>secret config&#32;--api&#32;--portal</code> so self-hosted users can
+            target their own deployment.
           </li>
           <li>
             Rename the package and binary for your distribution, remove private
@@ -208,7 +249,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
   <span class="text-amber-700">secret</span>: sealed.secret,
 &#125;)
 
-          <span class="text-violet-700">const</span> text = <span class="text-violet-700">await</span> <span class="text-sky-700">openText</span>(sealed)</code></pre>
+<span class="text-violet-700">const</span> text = <span class="text-violet-700">await</span> <span class="text-sky-700">openText</span>(sealed)</code></pre>
       </section>
     </PostContent>
 
