@@ -5,6 +5,7 @@ import { defineConfig } from 'astro/config'
 
 import cloudflare from '@astrojs/cloudflare'
 import react from '@astrojs/react'
+import { noImageEndpoint } from 'astro-no-image-endpoint/cloudflare'
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,7 +19,9 @@ export default defineConfig({
     defaultStrategy: 'viewport',
   },
 
-  adapter: cloudflare({}),
+  adapter: cloudflare({
+    imageService: 'passthrough',
+  }),
 
   session: {
     driver: {
@@ -46,5 +49,5 @@ export default defineConfig({
     },
   },
 
-  integrations: [react()],
+  integrations: [noImageEndpoint(), react()],
 })

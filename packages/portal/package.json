@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "astro dev --port 3000",
     "build": "astro build",
-    "release": "pnpm --filter secret-cipher build && pnpm build && wrangler deploy --minify",
+    "release": "pnpm --filter secret-cipher build && pnpm build && wrangler deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "astro preview",
@@ -28,6 +28,7 @@
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "astro": "^6.4.4",
+    "astro-no-image-endpoint": "^0.1.0",
     "axios": "^1.17.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -109,6 +109,9 @@ importers:
       astro:
         specifier: ^6.4.4
         version: 6.4.4(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.61.0)
+      astro-no-image-endpoint:
+        specifier: ^0.1.0
+        version: 0.1.0(astro@6.4.4(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.61.0))
       axios:
         specifier: ^1.17.0
         version: 1.17.0
@@ -1750,6 +1753,12 @@ packages:
   ast-types@0.16.1:
     resolution: {integrity: sha512-6t10qk83GOG8p0vKmaCr8eiilZwO171AvbROMtvvNiwrTly62t+7XkA8RdIIVbpMhCASAsxgAzdRSwh6nw/5Dg==}
     engines: {node: '>=4'}
+
+  astro-no-image-endpoint@0.1.0:
+    resolution: {integrity: sha512-RFcZPwLHsYuPJFd1fwo509AekvRXVwqDCyjIQCRNF1zVp6KP9be0m8X7LgByGZwGtHBPuc7bzBpWIPwqf+poQw==}
+    engines: {node: '>=20.11.0'}
+    peerDependencies:
+      astro: '>=5.0.0 <8.0.0'
 
   astro@6.4.4:
     resolution: {integrity: sha512-hVe8tq3lqt/Dr0UyB//yUmQSlHMTU8scTiF/vQddQVahLE4TTaSdH5H0nb7OvRcwo0UmlAO8DWYar4jNaS7H+A==}
@@ -5395,6 +5404,10 @@ snapshots:
   ast-types@0.16.1:
     dependencies:
       tslib: 2.8.1
+
+  astro-no-image-endpoint@0.1.0(astro@6.4.4(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.61.0)):
+    dependencies:
+      astro: 6.4.4(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.61.0)
 
   astro@6.4.4(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.61.0):
     dependencies:
