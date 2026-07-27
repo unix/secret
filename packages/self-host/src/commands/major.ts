@@ -8,7 +8,6 @@ export class Major {
   @Handler()
   async run(): Promise<void> {
     const result = await this.selfHost.run()
-
     console.log('Self-host files generated.')
     result.files.forEach(file => {
       console.log(`  ${file}`)

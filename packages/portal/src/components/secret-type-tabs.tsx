@@ -34,7 +34,6 @@ export const SecretTypeTabs = ({
       value={value}
       onValueChange={nextValue => {
         if (!isSecretTypeTabValue(nextValue)) return
-
         onValueChange(nextValue)
       }}
       className={cn('w-full', className)}>

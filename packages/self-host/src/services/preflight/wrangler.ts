@@ -12,21 +12,49 @@ type WranglerFailure = {
   readonly failure: string
 }
 
+const assertWranglerInstalled = async (): Promise<void> => {
+  try {
+    await access(paths.rootWrangler)
+  } catch {
+    throw new SelfHostError(
+      'Project dependencies are not installed. Run pnpm install at the project root first.',
+    )
+  }
+}
+
 export const wranglerInstallPreflight: PreflightCheck = {
   label: 'wrangler',
-  run: async context => {
+  run: async () => {
     await assertWranglerInstalled()
   },
 }
 
-export const wranglerAuthPreflight: PreflightCheck = {
-  label: 'wrangler-auth',
-  run: async context => {
-    await wranglerJson(['whoami', '--json'], context.env, {
-      failure:
-        'Wrangler authentication check failed. Run pnpm wrangler login first.',
-    })
-  },
+const accountEnv = (
+  env: EnvRecord | undefined,
+): { readonly CLOUDFLARE_ACCOUNT_ID?: string } => {
+  if (!env?.R2_ACCOUNT_ID) return {}
+  return { CLOUDFLARE_ACCOUNT_ID: env.R2_ACCOUNT_ID }
+}
+
+const isNodeError = (
+  error: unknown,
+): error is Error & {
+  readonly code?: string
+  readonly stderr?: string
+  readonly stdout?: string
+} => {
+  return error instanceof Error
+}
+
+const errorMessage = (error: unknown): string => {
+  if (!isNodeError(error)) return ''
+
+  const details = [error.stderr, error.stdout, error.message]
+    .filter(Boolean)
+    .join('\n')
+    .trim()
+
+  return details ? `\n${details.slice(0, 1000)}` : ''
 }
 
 export const wranglerJson = async (
@@ -64,41 +92,12 @@ export const wranglerJson = async (
   return parsed
 }
 
-const accountEnv = (
-  env: EnvRecord | undefined,
-): { readonly CLOUDFLARE_ACCOUNT_ID?: string } => {
-  if (!env?.R2_ACCOUNT_ID) return {}
-
-  return { CLOUDFLARE_ACCOUNT_ID: env.R2_ACCOUNT_ID }
-}
-
-const assertWranglerInstalled = async (): Promise<void> => {
-  try {
-    await access(paths.rootWrangler)
-  } catch {
-    throw new SelfHostError(
-      'Project dependencies are not installed. Run pnpm install at the project root first.',
-    )
-  }
-}
-
-const errorMessage = (error: unknown): string => {
-  if (!isNodeError(error)) return ''
-
-  const details = [error.stderr, error.stdout, error.message]
-    .filter(Boolean)
-    .join('\n')
-    .trim()
-
-  return details ? `\n${details.slice(0, 1000)}` : ''
-}
-
-const isNodeError = (
-  error: unknown,
-): error is Error & {
-  readonly code?: string
-  readonly stderr?: string
-  readonly stdout?: string
-} => {
-  return error instanceof Error
+export const wranglerAuthPreflight: PreflightCheck = {
+  label: 'wrangler-auth',
+  run: async context => {
+    await wranglerJson(['whoami', '--json'], context.env, {
+      failure:
+        'Wrangler authentication check failed. Run pnpm wrangler login first.',
+    })
+  },
 }

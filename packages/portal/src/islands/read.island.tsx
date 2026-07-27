@@ -102,7 +102,6 @@ const downloadBlob = (blob: Blob, filename: string): void => {
 const chunkToArrayBuffer = (chunk: Uint8Array): ArrayBuffer => {
   const buffer = new ArrayBuffer(chunk.byteLength)
   new Uint8Array(buffer).set(chunk)
-
   return buffer
 }
 
@@ -131,7 +130,6 @@ const decryptedTextFrame = (text: string, revealedIndexes: Set<number>): string 
   return [...text]
     .map((character, index) => {
       if (character === ' ' || revealedIndexes.has(index)) return character
-
       return randomCharacter()
     })
     .join('')
@@ -141,13 +139,11 @@ const fileExtension = (manifest: FileManifest): string => {
   const extension = manifest.name.split('.').pop()
   if (extension && extension !== manifest.name) return extension.toUpperCase()
   if (manifest.type) return manifest.type.split('/')[0]?.toUpperCase() ?? 'FILE'
-
   return 'FILE'
 }
 
 const formatFileSize = (size: number): string => {
   if (size < 1024) return `${size} B`
-
   const units = ['KB', 'MB', 'GB', 'TB'] as const
   let value = size / 1024
   let unitIndex = 0
@@ -185,7 +181,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 const errorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message
   if (isRecord(error) && typeof error.message === 'string') return error.message
-
   return ''
 }
 
@@ -193,21 +188,18 @@ const walletErrorCode = (error: unknown): number | string | null => {
   if (!isRecord(error)) return null
   const { code } = error
   if (typeof code === 'number' || typeof code === 'string') return code
-
   return null
 }
 
 const isUserRejectedRequest = (error: unknown): boolean => {
   const code = walletErrorCode(error)
   if (code === 4001 || code === '4001' || code === 'ACTION_REJECTED') return true
-
   return /cancel|denied|reject/i.test(errorMessage(error))
 }
 
 const walletRequestError = (error: unknown, fallback: string): Error => {
   const message = errorMessage(error)
   if (!message) return new Error(fallback)
-
   return new Error(`${fallback} ${message}`)
 }
 
@@ -222,7 +214,7 @@ const walletAddress = async (): Promise<`0x${string}`> => {
     accounts = await provider.request({ method: 'eth_requestAccounts' })
   } catch (error) {
     if (isUserRejectedRequest(error)) {
-      throw new Error(WALLET_CONNECTION_CANCELLED_ERROR)
+      throw new Error(WALLET_CONNECTION_CANCELLED_ERROR, { cause: error })
     }
 
     throw walletRequestError(error, WALLET_CONNECT_ERROR)
@@ -254,7 +246,7 @@ const personalSign = async ({
     })
   } catch (error) {
     if (isUserRejectedRequest(error)) {
-      throw new Error(SIGNATURE_CANCELLED_ERROR)
+      throw new Error(SIGNATURE_CANCELLED_ERROR, { cause: error })
     }
 
     throw walletRequestError(error, 'Unable to sign the wallet message.')
@@ -356,7 +348,7 @@ const StatusMessage = ({ status }: { readonly status: ReadStatus }) => {
     return (
       <div
         role="alert"
-        className={`mx-auto max-w-[420px] whitespace-pre-line text-center text-xs leading-5 ${className}`}>
+        className={`mx-auto max-w-[420px] text-center text-xs leading-5 whitespace-pre-line ${className}`}>
         {status.message}
       </div>
     )
@@ -383,14 +375,12 @@ const RevealSecretButton = ({
 
   useEffect(() => {
     if (!busy) return
-
     setLabel(OPENING_TEXT)
   }, [busy])
 
   useEffect(() => {
     return () => {
       if (frameRef.current === null) return
-
       window.clearInterval(frameRef.current)
     }
   }, [])
@@ -433,7 +423,7 @@ const RevealSecretButton = ({
       onClick={onReveal}
       onFocus={decryptLabel}
       onMouseEnter={decryptLabel}
-      className="bg-transparent p-0 font-mono text-sm font-normal leading-6 text-black underline decoration-black/45 decoration-[1px] decoration-dashed underline-offset-4 transition-colors hover:decoration-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/18 focus-visible:ring-offset-4 disabled:cursor-not-allowed disabled:text-black/35 disabled:line-through disabled:decoration-black/25 disabled:hover:decoration-black/25">
+      className="bg-transparent p-0 font-mono text-sm leading-6 font-normal text-black underline decoration-black/45 decoration-dashed decoration-[1px] underline-offset-4 transition-colors hover:decoration-black focus-visible:ring-2 focus-visible:ring-black/18 focus-visible:ring-offset-4 focus-visible:outline-none disabled:cursor-not-allowed disabled:text-black/35 disabled:line-through disabled:decoration-black/25 disabled:hover:decoration-black/25">
       {label}
     </button>
   )
@@ -466,7 +456,7 @@ const OpenedTextSecret = ({ value }: { readonly value: string }) => {
       </div>
       <pre
         aria-label="Opened secret"
-        className="min-h-32 overflow-auto whitespace-pre-wrap rounded-[3px] border border-zinc-200 bg-white p-4 font-mono text-sm leading-6 text-zinc-950 shadow-xs">
+        className="min-h-32 overflow-auto rounded-[3px] border border-zinc-200 bg-white p-4 font-mono text-sm leading-6 whitespace-pre-wrap text-zinc-950 shadow-xs">
         <code>{value}</code>
       </pre>
     </div>
@@ -496,7 +486,6 @@ const OpenedFileSecret = ({
   useEffect(() => {
     return () => {
       if (frameRef.current === null) return
-
       window.clearInterval(frameRef.current)
     }
   }, [])
@@ -659,7 +648,6 @@ export const ReadSecretIsland = (props: ReadSecretIslandProps) => {
   const [used, setUsed] = useState(false)
   const accessFragment = useMemo(() => {
     if (typeof window === 'undefined') return null
-
     return window.location.hash
   }, [])
 

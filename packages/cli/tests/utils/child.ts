@@ -1,17 +1,17 @@
 import { spawn } from 'child_process'
-import type { SpawnOptions } from 'child_process'
+import type { ChildProcess, SpawnOptions } from 'child_process'
 import { bin } from './metadata'
 
 export const spawnCli = async (args: string[] = [], opts: SpawnOptions = {}) => {
   return new Promise<string>((resolve, reject) => {
-    const childOpts = { stdio: 'pipe', ...opts }
+    const childOpts: SpawnOptions = { stdio: 'pipe', ...opts }
     const stderr: Buffer[] = []
     const stdout: Buffer[] = []
-    const child = spawn(process.execPath, [bin, ...args], childOpts)
+    const child: ChildProcess = spawn(process.execPath, [bin, ...args], childOpts)
 
     if (childOpts.stdio === 'pipe') {
-      child.stderr.on('data', err => stderr.push(err))
-      child.stdout.on('data', data => stdout.push(data))
+      child.stderr?.on('data', (error: Buffer) => stderr.push(error))
+      child.stdout?.on('data', (data: Buffer) => stdout.push(data))
     }
 
     child.on('error', reject)
@@ -23,11 +23,11 @@ export const spawnCli = async (args: string[] = [], opts: SpawnOptions = {}) => 
 
       const errorLogs = stderr.map(line => line.toString()).join('')
       if (childOpts.stdio !== 'inherit') {
-        reject(new Error(`Exited with ${code || signal}\n${errorLogs}`))
+        reject(new Error(`Exited with ${code ?? signal}\n${errorLogs}`))
         return
       }
 
-      reject(new Error(`Exited with ${code || signal}`))
+      reject(new Error(`Exited with ${code ?? signal}`))
     })
   })
 }

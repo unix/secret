@@ -68,6 +68,33 @@ export const revealId = ({
   return `${readId}.${secret}`
 }
 
+const decodeCliAccessInput = (
+  input: string,
+  decodeFragment: (fragment: string) => { readonly secret: string } | null,
+): { readonly readId: string; readonly secret: string } | null => {
+  const shorthand = CLI_REVEAL_ID_PATTERN.exec(input)
+  if (shorthand) {
+    const fragment = decodeFragment(shorthand[2])
+    if (!fragment) return null
+
+    return {
+      readId: shorthand[1],
+      secret: fragment.secret,
+    }
+  }
+
+  const fragmentIndex = input.indexOf('#')
+  if (fragmentIndex <= 0) return null
+  const readId = input.slice(0, fragmentIndex)
+  const fragment = decodeFragment(input.slice(fragmentIndex))
+  if (!fragment) return null
+
+  return {
+    readId,
+    secret: fragment.secret,
+  }
+}
+
 export const decodeAccess = (input: string): DecodedAccess => {
   const isUrl = ABSOLUTE_URL_PATTERN.test(input)
   const text = isUrl
@@ -91,32 +118,4 @@ export const decodeAccess = (input: string): DecodedAccess => {
   }
 
   throw new InvalidRevealInputError()
-}
-
-const decodeCliAccessInput = (
-  input: string,
-  decodeFragment: (fragment: string) => { readonly secret: string } | null,
-): { readonly readId: string; readonly secret: string } | null => {
-  const shorthand = CLI_REVEAL_ID_PATTERN.exec(input)
-  if (shorthand) {
-    const fragment = decodeFragment(shorthand[2])
-    if (!fragment) return null
-
-    return {
-      readId: shorthand[1],
-      secret: fragment.secret,
-    }
-  }
-
-  const fragmentIndex = input.indexOf('#')
-  if (fragmentIndex <= 0) return null
-
-  const readId = input.slice(0, fragmentIndex)
-  const fragment = decodeFragment(input.slice(fragmentIndex))
-  if (!fragment) return null
-
-  return {
-    readId,
-    secret: fragment.secret,
-  }
 }

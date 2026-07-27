@@ -17,21 +17,14 @@ const trackStatus = ({
 }): TrackStatus => {
   const hasExpiredWithRemainingReads = expiresAt <= timestamp && remainingReads > 0
   if (hasExpiredWithRemainingReads) return 'expired'
-
   return status
 }
 
 export const trackSecret = async (c: AppContext): Promise<Response> => {
   const trackId = c.req.param('trackId')
-  if (!trackId) {
-    return http.notFound(c, 'Secret not found.')
-  }
-
+  if (!trackId) return http.notFound(c, 'Secret not found.')
   const secret = await d1.findSecretByTrackId(c.env.DB, trackId)
-  if (!secret) {
-    return http.notFound(c, 'Secret not found.')
-  }
-
+  if (!secret) return http.notFound(c, 'Secret not found.')
   const reads = await d1.findReadRowsBySecretId(c.env.DB, secret.id)
   const remainingReads = reads.filter(read => read.consumed_at === null).length
   const timestamp = Date.now()

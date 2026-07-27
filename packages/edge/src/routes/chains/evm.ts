@@ -42,7 +42,6 @@ const isVerifyEvmInput = (value: unknown): value is VerifyEvmInput => {
 
 const isChallengeEvmInput = (value: unknown): value is ChallengeEvmInput => {
   if (!isRecord(value)) return false
-
   return typeof value.origin === 'string'
 }
 
@@ -61,8 +60,7 @@ const headerUrl = (value: string | undefined): URL | null => {
 
 const originUrl = (value: string): URL | null => {
   const url = headerUrl(value)
-  if (!url || url.origin !== value) return null
-
+  if (url?.origin !== value) return null
   return url
 }
 
@@ -87,10 +85,8 @@ const requestOrigin = (c: AppContext): URL => {
 const nonApiHeaderOrigin = (c: AppContext): URL | null => {
   const origin = headerUrl(c.req.header('Origin'))
   if (origin && !isApiOrigin(c, origin)) return origin
-
   const referer = headerUrl(c.req.header('Referer'))
   if (referer && !isApiOrigin(c, referer)) return referer
-
   return null
 }
 
@@ -110,7 +106,6 @@ const challengeOrigin = (
   const client = input ? originUrl(input.origin) : null
   if (input && !client) return null
   if (header && client && header.origin !== client.origin) return null
-
   return client ?? header ?? requestOrigin(c)
 }
 
@@ -121,11 +116,9 @@ const challengeUrl = (
 ): URL | null => {
   const url = challengeOrigin(c, input)
   if (!url) return null
-
   url.hash = ''
   url.search = ''
   url.pathname = `/e/${encodeURIComponent(evmId)}`
-
   return url
 }
 
@@ -143,10 +136,7 @@ const isUnavailableEvmRead = ({
 
 export const evmChallenge = async (c: AppContext): Promise<Response> => {
   const evmId = c.req.param('evmId')
-  if (!evmId) {
-    return http.notFound(c, 'EVM gated link not found.')
-  }
-
+  if (!evmId) return http.notFound(c, 'EVM gated link not found.')
   const timestamp = Date.now()
   const read = await d1Evm.findRead(c.env.DB, evmId)
   if (
@@ -160,20 +150,13 @@ export const evmChallenge = async (c: AppContext): Promise<Response> => {
     return http.notFound(c, 'EVM gated link not found.')
   }
 
-  if (read.chain_id !== EVM_MAINNET_CHAIN_ID) {
+  if (read.chain_id !== EVM_MAINNET_CHAIN_ID)
     return http.badRequest(c, UNSUPPORTED_EVM_NETWORK_MESSAGE)
-  }
-
   const input = await challengeInput(c)
-  if (input !== null && !isChallengeEvmInput(input)) {
+  if (input !== null && !isChallengeEvmInput(input))
     return http.badRequest(c, 'Invalid EVM challenge input.')
-  }
-
   const url = challengeUrl(c, evmId, input)
-  if (!url) {
-    return http.badRequest(c, 'Invalid EVM challenge origin.')
-  }
-
+  if (!url) return http.badRequest(c, 'Invalid EVM challenge origin.')
   const id = randomId(EVM_CHALLENGE_ID_BYTES)
   const nonce = randomAlphanumericId(EVM_CHALLENGE_NONCE_LENGTH)
   const expiresAt = timestamp + EVM_CHALLENGE_TTL_MS
@@ -204,15 +187,10 @@ export const evmChallenge = async (c: AppContext): Promise<Response> => {
 
 export const evmVerify = async (c: AppContext): Promise<Response> => {
   const evmId = c.req.param('evmId')
-  if (!evmId) {
-    return http.notFound(c, 'EVM gated link not found.')
-  }
-
+  if (!evmId) return http.notFound(c, 'EVM gated link not found.')
   const input = await c.req.json<unknown>()
-  if (!isVerifyEvmInput(input) || !isHex(input.signature)) {
+  if (!isVerifyEvmInput(input) || !isHex(input.signature))
     return http.badRequest(c, 'Invalid EVM verification input.')
-  }
-
   const timestamp = Date.now()
   const read = await d1Evm.findRead(c.env.DB, evmId)
   if (
@@ -226,19 +204,16 @@ export const evmVerify = async (c: AppContext): Promise<Response> => {
     return http.notFound(c, 'EVM gated link not found.')
   }
 
-  if (read.chain_id !== EVM_MAINNET_CHAIN_ID) {
+  if (read.chain_id !== EVM_MAINNET_CHAIN_ID)
     return http.badRequest(c, UNSUPPORTED_EVM_NETWORK_MESSAGE)
-  }
 
   const challenge = await d1Evm.findChallenge({
     db: c.env.DB,
     evmId,
     challengeId: input.challengeId,
   })
-  if (!challenge || challenge.consumed_at || challenge.expires_at <= timestamp) {
+  if (!challenge || challenge.consumed_at || challenge.expires_at <= timestamp)
     return http.badRequest(c, 'EVM verification failed.')
-  }
-
   const expectedAddress = getAddress(read.address)
   let verified = false
   try {
@@ -269,9 +244,7 @@ export const evmVerify = async (c: AppContext): Promise<Response> => {
     verified = false
   }
 
-  if (!verified) {
-    return http.badRequest(c, 'EVM verification failed.')
-  }
+  if (!verified) return http.badRequest(c, 'EVM verification failed.')
 
   const consumed = await d1Evm.consumeChallenge({
     db: c.env.DB,
@@ -279,9 +252,8 @@ export const evmVerify = async (c: AppContext): Promise<Response> => {
     challengeId: input.challengeId,
     timestamp,
   })
-  if (!consumed) {
+  if (!consumed)
     return http.conflict(c, 'EVM verification challenge has already been used.')
-  }
 
   return c.json({
     readId: read.read_id,

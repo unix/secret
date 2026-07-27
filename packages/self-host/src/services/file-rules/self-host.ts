@@ -15,6 +15,15 @@ type SelfHostRuleInput = {
   readonly project: GeneratedProject
 }
 
+const parseSelfHost = (contents: string, label: string): void => {
+  const match = SELF_HOST_EXPORT_PATTERN.exec(contents)
+  if (!match) {
+    throw new SelfHostError(`${label} does not have a readable selfHost export.`)
+  }
+
+  parseJsonFile(match[1], label)
+}
+
 const selfHostRule = ({ label, path, project }: SelfHostRuleInput): FileRule => {
   return {
     label,
@@ -22,7 +31,6 @@ const selfHostRule = ({ label, path, project }: SelfHostRuleInput): FileRule => 
     validateParse: async () => {
       const contents = await readOptionalFile(path)
       if (contents === null) return
-
       parseSelfHost(contents, label)
     },
     validateTarget: async () => {
@@ -32,15 +40,6 @@ const selfHostRule = ({ label, path, project }: SelfHostRuleInput): FileRule => 
       await writeFile(path, generatedSelfHostFile(project, secretEnv.config), 'utf8')
     },
   }
-}
-
-const parseSelfHost = (contents: string, label: string): void => {
-  const match = contents.match(SELF_HOST_EXPORT_PATTERN)
-  if (!match) {
-    throw new SelfHostError(`${label} does not have a readable selfHost export.`)
-  }
-
-  parseJsonFile(match[1], label)
 }
 
 export const selfHostRules: readonly FileRule[] = [

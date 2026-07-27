@@ -11,13 +11,11 @@ const fileExtension = (file: File): string => {
   const extension = file.name.split('.').pop()
   if (extension && extension !== file.name) return extension.toUpperCase()
   if (file.type) return file.type.split('/')[0]?.toUpperCase() ?? 'FILE'
-
   return 'FILE'
 }
 
 const formatFileSize = (size: number): string => {
   if (size < 1024) return `${size} B`
-
   const units = ['KB', 'MB', 'GB', 'TB'] as const
   let value = size / 1024
   let unitIndex = 0
@@ -34,7 +32,6 @@ const formatFileMeta = (file: File): string => {
   const parts = [fileExtension(file), formatFileSize(file.size)]
   if (file.type) parts.push(file.type)
   if (file.lastModified) parts.push(new Date(file.lastModified).toLocaleDateString())
-
   return parts.join(' · ')
 }
 

@@ -15,8 +15,8 @@ const UNSUPPORTED_EVM_ACCOUNT_MESSAGE =
   'Contract addresses and smart wallets are not supported yet.'
 
 const isLocalHost = (): boolean => {
-  const hostname = globalThis.location?.hostname ?? ''
-
+  if (!Reflect.has(globalThis, 'location')) return false
+  const hostname = globalThis.location.hostname
   return LOCAL_HOST_PARTS.some(part => hostname.includes(part))
 }
 
@@ -62,13 +62,11 @@ const isApiErrorBody = (value: unknown): value is ApiErrorBody => {
 
 const arrayBufferErrorMessage = (data: ArrayBuffer): string | null => {
   if (data.byteLength === 0) return null
-
   const text = textDecoder.decode(data)
   try {
     const parsed: unknown = JSON.parse(text)
-    if (isApiErrorBody(parsed) && typeof parsed.error === 'string') {
+    if (isApiErrorBody(parsed) && typeof parsed.error === 'string')
       return parsed.error
-    }
   } catch {
     return text
   }
@@ -80,24 +78,16 @@ const isEmptyErrorData = (data: unknown): boolean => {
   if (data === undefined || data === null) return true
   if (typeof data === 'string') return data.length === 0
   if (data instanceof ArrayBuffer) return data.byteLength === 0
-
   return false
 }
 
 const errorMessage = (error: unknown): string | null => {
   if (!axios.isAxiosError(error)) return null
-
-  if (error.response?.status === 429) {
-    return RATE_LIMIT_MESSAGE
-  }
-
-  if (error.response?.status === 501) {
+  if (error.response?.status === 429) return RATE_LIMIT_MESSAGE
+  if (error.response?.status === 501)
     return 'This deployment has not configured an Ethereum RPC provider yet.'
-  }
-  if (error.response?.status === 400 && isEmptyErrorData(error.response.data)) {
+  if (error.response?.status === 400 && isEmptyErrorData(error.response.data))
     return UNSUPPORTED_EVM_ACCOUNT_MESSAGE
-  }
-
   const requestUrl = error.config?.url ?? ''
   if (
     error.code === 'ERR_NETWORK' &&
@@ -106,15 +96,11 @@ const errorMessage = (error: unknown): string | null => {
     return 'Unable to reach R2. Check the bucket CORS policy for this origin.'
   }
 
-  const data = error.response?.data
+  const data: unknown = error.response?.data
   if (data instanceof ArrayBuffer) return arrayBufferErrorMessage(data)
-  if (isApiErrorBody(data) && typeof data.error === 'string') {
-    return data.error
-  }
-
+  if (isApiErrorBody(data) && typeof data.error === 'string') return data.error
   if (typeof data === 'string' && data.length > 0) return data
   if (error.message.length > 0) return error.message
-
   return null
 }
 
@@ -125,6 +111,6 @@ export const responseData = async <T>(
   try {
     return (await response).data
   } catch (error) {
-    throw new Error(errorMessage(error) ?? fallbackMessage)
+    throw new Error(errorMessage(error) ?? fallbackMessage, { cause: error })
   }
 }

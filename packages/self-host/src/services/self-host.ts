@@ -15,7 +15,6 @@ export class SelfHostService {
     const context = await this.preflight.run()
     const files = await this.generator.run(context)
     await this.r2Cors.apply(context)
-
     return { files }
   }
 }

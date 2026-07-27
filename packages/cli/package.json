@@ -9,8 +9,8 @@
     "build": "pnpm --filter secret-cipher build && funcgo build",
     "setup": "funcgo setup",
     "test": "pnpm build && vitest run",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "prettier": "prettier --write .",
     "release": "pnpm build && pnpm publish --access public --no-git-checks"
   },
   "prettier": "@unix/prettier",
@@ -35,7 +35,9 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
+    "@unix/eslint": "^1.3.0",
     "@unix/prettier": "^0.1.0",
+    "eslint": "^10.8.0",
     "funcgo": "^0.1.3",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",

@@ -61,7 +61,7 @@ export class Major {
       const reads = linkCount(this.links)
 
       if (this.file) {
-        const filePath = args.inputs[0]
+        const filePath = args.inputs.at(0)
         if (!filePath?.trim()) {
           Major.PrintFilePathHelp()
           return
@@ -103,7 +103,6 @@ export class Major {
       }
     } catch (error) {
       if (printExpectedError(error)) return
-
       throw error
     } finally {
       await this.cleanupLocalFiles()

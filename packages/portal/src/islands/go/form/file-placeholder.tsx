@@ -12,7 +12,7 @@ export const FilePlaceholder = ({ onFileChange }: FilePlaceholderProps) => {
   return (
     <label
       htmlFor={inputId}
-      className="group flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-white p-3 shadow-xs transition-colors hover:border-violet-400 hover:bg-zinc-50 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-400/20">
+      className="group flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-white p-3 shadow-xs transition-colors focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-400/20 hover:border-violet-400 hover:bg-zinc-50">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-500 transition-colors group-hover:text-zinc-800">
         <HugeiconsIcon icon={CloudUploadIcon} strokeWidth={1.7} />
       </span>

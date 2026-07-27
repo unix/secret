@@ -24,12 +24,15 @@ export const readExistingFile = async (
   }
 }
 
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
+  return error !== null && typeof error === 'object' && 'code' in error
+}
+
 export const readOptionalFile = async (path: string): Promise<string | null> => {
   try {
     return await readFile(path, 'utf8')
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') return null
-
     throw error
   }
 }
@@ -39,14 +42,13 @@ export const parseJsonFile = (contents: string, label: string): unknown => {
     return JSON.parse(contents)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-
     throw new SelfHostError(`${label} is not valid JSON: ${message}`)
   }
 }
 
 export const parseJsoncFile = (contents: string, label: string): unknown => {
   const errors: ParseError[] = []
-  const parsed = parseJsonc(contents, errors, { allowTrailingComma: true })
+  const parsed: unknown = parseJsonc(contents, errors, { allowTrailingComma: true })
   if (errors.length > 0) {
     throw new SelfHostError(
       `${label} is not valid JSONC: ${errors.map(error => error.error).join(', ')}`,
@@ -54,8 +56,4 @@ export const parseJsoncFile = (contents: string, label: string): unknown => {
   }
 
   return parsed
-}
-
-const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
-  return error !== null && typeof error === 'object' && 'code' in error
 }

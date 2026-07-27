@@ -1,4 +1,4 @@
-import { ERRORS } from './constants'
+import type { ERRORS } from './constants'
 
 export type CipherErrorCode = (typeof ERRORS)[keyof typeof ERRORS]
 

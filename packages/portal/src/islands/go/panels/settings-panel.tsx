@@ -36,7 +36,7 @@ export const SettingsPanel = ({
   const readLabel = optionLabel(readOptions, settings.reads)
 
   return (
-    <div className="grid rounded-lg border border-zinc-200 bg-white shadow-xs divide-y divide-zinc-100">
+    <div className="grid divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white shadow-xs">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <FieldTitle className="text-sm text-zinc-950">Expiration</FieldTitle>

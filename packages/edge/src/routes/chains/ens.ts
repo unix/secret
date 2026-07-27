@@ -13,20 +13,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const isResolveEnsInput = (value: unknown): value is ResolveEnsInput => {
   if (!isRecord(value)) return false
-
   return typeof value.name === 'string'
 }
 
 export const resolveEnsName = async (c: AppContext): Promise<Response> => {
   const provider = ethRpcProvider(c.env)
-  if (!provider) {
+  if (!provider)
     return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
-  }
-
   const input = await c.req.json<unknown>()
-  if (!isResolveEnsInput(input)) {
+  if (!isResolveEnsInput(input))
     return http.badRequest(c, 'Invalid ENS resolution input.')
-  }
 
   const result = await resolveEns.resolveForPreview({
     db: c.env.DB,

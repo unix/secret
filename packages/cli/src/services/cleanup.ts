@@ -69,10 +69,8 @@ export class CleanupService {
     let removed = 0
     for (const entry of await this.entries()) {
       if (entry === CONFIG_FILE_NAME) continue
-
       const path = join(configDir(), entry)
       if (!(await lstat(path)).isFile()) continue
-
       await unlink(path)
       removed += 1
     }
@@ -85,10 +83,8 @@ export class CleanupService {
     let removed = 0
     for (const entry of await this.entries()) {
       if (!entry.startsWith(TRACK_FILE_PREFIX)) continue
-
       const track = await this.trackFile(entry)
       if (!track || track.createdAt > expiresBefore) continue
-
       await unlink(join(configDir(), entry))
       removed += 1
     }

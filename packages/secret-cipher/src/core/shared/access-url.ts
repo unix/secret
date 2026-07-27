@@ -20,7 +20,6 @@ export const normalizeBasePath = (
 
 export const normalizeOrigin = (origin?: string): string => {
   if (!origin) return ''
-
   return origin.replace(/\/+$/, '')
 }
 
@@ -39,27 +38,6 @@ export const encodeAccessUrl = ({
   return `${normalizeOrigin(origin)}${path}${fragment}`
 }
 
-export const decodeAccessUrl = <Fragment>({
-  input,
-  basePath,
-  decodeFragment,
-}: DecodeAccessUrlInput<Fragment>): DecodedAccessUrl<Fragment> | null => {
-  const url = parseAbsoluteUrl(input)
-  const fragment = decodeFragment(url.hash)
-  if (!fragment) return null
-
-  const expectedBasePath = normalizeBasePath(basePath)
-  if (!url.pathname.startsWith(`${expectedBasePath}/`)) return null
-
-  const readId = decodeURIComponent(url.pathname.slice(expectedBasePath.length + 1))
-  if (!readId) return null
-
-  return {
-    ...fragment,
-    readId,
-  }
-}
-
 const hasOrigin = (input: string): boolean => {
   return /^[a-z][a-z\d+\-.]*:\/\//i.test(input)
 }
@@ -75,5 +53,24 @@ const parseAbsoluteUrl = (input: string): URL => {
     throw new CipherError(ERRORS.INVALID_URL, 'Invalid access URL.', {
       cause: error,
     })
+  }
+}
+
+export const decodeAccessUrl = <Fragment>({
+  input,
+  basePath,
+  decodeFragment,
+}: DecodeAccessUrlInput<Fragment>): DecodedAccessUrl<Fragment> | null => {
+  const url = parseAbsoluteUrl(input)
+  const fragment = decodeFragment(url.hash)
+  if (!fragment) return null
+  const expectedBasePath = normalizeBasePath(basePath)
+  if (!url.pathname.startsWith(`${expectedBasePath}/`)) return null
+  const readId = decodeURIComponent(url.pathname.slice(expectedBasePath.length + 1))
+  if (!readId) return null
+
+  return {
+    ...fragment,
+    readId,
   }
 }

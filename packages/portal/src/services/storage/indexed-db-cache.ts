@@ -24,7 +24,7 @@ const requestToPromise = <T>(request: IDBRequest<T>) =>
 
 const openDatabase = (databaseName: string) =>
   new Promise<IDBDatabase>((resolve, reject) => {
-    if (!globalThis.indexedDB) {
+    if (!Reflect.has(globalThis, 'indexedDB')) {
       reject(new Error('IndexedDB is not available.'))
       return
     }
@@ -129,6 +129,8 @@ const create = <T>({
             return
           }
 
+          // IndexedDB cursor values are typed as any by the DOM API.
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const record = cursor.value as CacheRecord<T>
           records.push(record.value)
           cursor.continue()
@@ -144,6 +146,8 @@ const create = <T>({
     const { db, store } = await storeFor('readonly')
     try {
       const record = await requestToPromise<CacheRecord<T> | undefined>(
+        // IndexedDB get() exposes IDBRequest<any>; the store schema supplies the type.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         store.get(fullKey(key)),
       )
 
@@ -168,6 +172,8 @@ const create = <T>({
     const { db, store } = await storeFor('readwrite')
     try {
       const existing = await requestToPromise<CacheRecord<T> | undefined>(
+        // IndexedDB get() exposes IDBRequest<any>; the store schema supplies the type.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         store.get(keyPath),
       )
       await requestToPromise(

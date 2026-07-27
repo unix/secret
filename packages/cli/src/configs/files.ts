@@ -12,6 +12,26 @@ export const configFile = (): string => {
   return join(configDir(), CONFIG_FILE_NAME)
 }
 
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
+  return error instanceof Error && 'code' in error
+}
+
+const configAccessError = (path: string, error: unknown): Error => {
+  const reason = isNodeError(error) ? ` ${error.message}` : ''
+
+  return new Error(
+    `Cannot access the config path ${path}.${reason} Check the directory permissions or choose a writable home directory.`,
+  )
+}
+
+const assertWritableDirectory = async (directory: string): Promise<void> => {
+  try {
+    await access(directory, constants.W_OK | constants.X_OK)
+  } catch (error) {
+    throw configAccessError(directory, error)
+  }
+}
+
 export const ensureConfigDir = async (): Promise<void> => {
   const directory = configDir()
   try {
@@ -29,24 +49,4 @@ export const ensureConfigDir = async (): Promise<void> => {
   } catch (error) {
     throw configAccessError(directory, error)
   }
-}
-
-const assertWritableDirectory = async (directory: string): Promise<void> => {
-  try {
-    await access(directory, constants.W_OK | constants.X_OK)
-  } catch (error) {
-    throw configAccessError(directory, error)
-  }
-}
-
-const configAccessError = (path: string, error: unknown): Error => {
-  const reason = isNodeError(error) ? ` ${error.message}` : ''
-
-  return new Error(
-    `Cannot access the config path ${path}.${reason} Check the directory permissions or choose a writable home directory.`,
-  )
-}
-
-const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
-  return error instanceof Error && 'code' in error
 }

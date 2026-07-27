@@ -34,7 +34,6 @@ export const AnimatedHeightContainer: FC<AnimatedHeightContainerProps> = ({
     const content = contentRef.current
     const frame = frameRef.current
     if (!content || !frame) return
-
     const nextHeight = open === false ? 0 : content.offsetHeight
     const previousHeight = heightRef.current
     heightRef.current = nextHeight
@@ -61,7 +60,6 @@ export const AnimatedHeightContainer: FC<AnimatedHeightContainerProps> = ({
     frame.style.overflow = 'hidden'
     frame.style.transition = 'none'
     void frame.offsetHeight
-
     frame.style.transition = ''
     frame.style.height = `${nextHeight}px`
   })

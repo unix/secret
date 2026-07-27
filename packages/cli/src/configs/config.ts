@@ -63,6 +63,29 @@ type StoredConfig = {
   }
 }
 
+const endpointSectionValue = (
+  config: StoredConfig,
+  overrides: EndpointOverrides = {},
+): ResolvedEndpoints => {
+  const defaultApi = isLocalRuntime()
+    ? LOCAL.ENDPOINTS.API_ORIGIN
+    : PRODUCTION.ENDPOINTS.API_ORIGIN
+  const apiOrigin = normalizeOrigin(
+    overrides.api ?? config.endpoints?.api ?? defaultApi,
+  )
+  const defaultPortal =
+    isLocalRuntime() || isLocalOrigin(apiOrigin)
+      ? LOCAL.ENDPOINTS.PORTAL_ORIGIN
+      : PRODUCTION.ENDPOINTS.PORTAL_ORIGIN
+
+  return {
+    apiOrigin,
+    portalOrigin: normalizeOrigin(
+      overrides.portal ?? config.endpoints?.portal ?? defaultPortal,
+    ),
+  }
+}
+
 const CONFIG_GETTERS: {
   readonly [Key in keyof ConfigGetValue]: ConfigGetter<Key>
 } = {
@@ -112,97 +135,27 @@ const CONFIG_WRITERS: {
   },
 }
 
-export const configs = {
-  file: configFile,
-  get: async <Key extends keyof ConfigGetValue>(
-    key: Key,
-    options?: ConfigGetOptions[Key],
-  ): Promise<ConfigGetValue[Key]> => {
-    const config = await readConfig()
-
-    return CONFIG_GETTERS[key](config, options)
-  },
-  put: async <Key extends ConfigWritableKey>(
-    key: Key,
-    value: ConfigPutValue[Key],
-  ): Promise<StoredConfig> => {
-    const config = await readConfig()
-
-    return writeNextConfig(CONFIG_WRITERS[key](config, value))
-  },
-  init: async (): Promise<StoredConfig> => {
-    const config = await readConfig()
-    if (config.cleanup) return config
-
-    return writeNextConfig({
-      ...config,
-      cleanup: {
-        lastRunAt: 0,
-      },
-    })
-  },
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
+  return error instanceof Error && 'code' in error
 }
 
-const endpointSectionValue = (
-  config: StoredConfig,
-  overrides: EndpointOverrides = {},
-): ResolvedEndpoints => {
-  const defaultApi = isLocalRuntime()
-    ? LOCAL.ENDPOINTS.API_ORIGIN
-    : PRODUCTION.ENDPOINTS.API_ORIGIN
-  const apiOrigin = normalizeOrigin(
-    overrides.api ?? config.endpoints?.api ?? defaultApi,
+const configAccessError = (
+  action: 'read' | 'write',
+  error: NodeJS.ErrnoException,
+): Error => {
+  return new Error(
+    `Cannot ${action} config file ${configFile()}. ${error.message} Check the file permissions.`,
   )
-  const defaultPortal =
-    isLocalRuntime() || isLocalOrigin(apiOrigin)
-      ? LOCAL.ENDPOINTS.PORTAL_ORIGIN
-      : PRODUCTION.ENDPOINTS.PORTAL_ORIGIN
-
-  return {
-    apiOrigin,
-    portalOrigin: normalizeOrigin(
-      overrides.portal ?? config.endpoints?.portal ?? defaultPortal,
-    ),
-  }
 }
 
-const readConfig = async (): Promise<StoredConfig> => {
-  let raw: string
-  try {
-    raw = await readFile(configFile(), 'utf8')
-  } catch (error) {
-    if (isNodeError(error)) {
-      if (error.code === 'ENOENT') return {}
-      if (error.code === 'EACCES' || error.code === 'EPERM') {
-        throw configAccessError('read', error)
-      }
-    }
-
-    throw error
-  }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch (error) {
-    throw configFormatError(
-      `The file is not valid JSON.${error instanceof Error ? ` ${error.message}` : ''}`,
-    )
-  }
-
-  if (!isConfigObject(parsed)) {
-    throw configFormatError('The file must contain a JSON object.')
-  }
-
-  return normalizeConfig(parsed)
+const configFormatError = (message: string): Error => {
+  return new Error(
+    `Invalid config file ${configFile()}: ${message} Fix the file or remove it and run secret config again.`,
+  )
 }
 
-const normalizeConfig = (value: object): StoredConfig => {
-  const cleanup = normalizeCleanup(value)
-  const endpoints = normalizeEndpoints(value)
-  if (!cleanup && !endpoints) return {}
-
-  return { cleanup, endpoints }
+const isConfigObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 const normalizeCleanup = (value: object): StoredConfig['cleanup'] | undefined => {
@@ -217,25 +170,14 @@ const normalizeCleanup = (value: object): StoredConfig['cleanup'] | undefined =>
   ) {
     throw configFormatError('The "cleanup.lastRunAt" field must be a number.')
   }
-  if (typeof value.cleanup.lastRunAt === 'number') {
+  if (typeof value.cleanup.lastRunAt === 'number')
     return { lastRunAt: value.cleanup.lastRunAt }
-  }
-
   return {}
 }
 
-const normalizeEndpoints = (
-  value: object,
-): StoredConfig['endpoints'] | undefined => {
-  if ('endpoints' in value) {
-    if (!isConfigObject(value.endpoints)) {
-      throw configFormatError('The "endpoints" field must be an object.')
-    }
-
-    return normalizeEndpointValues(value.endpoints, 'endpoints')
-  }
-
-  return normalizeLegacyEndpointValues(value)
+const configFieldPath = (path: 'endpoints' | 'legacy', field: string): string => {
+  if (path === 'legacy') return field
+  return `${path}.${field}`
 }
 
 const normalizeEndpointValues = (
@@ -288,6 +230,58 @@ const normalizeLegacyEndpointValues = (
   return undefined
 }
 
+const normalizeEndpoints = (
+  value: object,
+): StoredConfig['endpoints'] | undefined => {
+  if ('endpoints' in value) {
+    if (!isConfigObject(value.endpoints)) {
+      throw configFormatError('The "endpoints" field must be an object.')
+    }
+
+    return normalizeEndpointValues(value.endpoints, 'endpoints')
+  }
+
+  return normalizeLegacyEndpointValues(value)
+}
+
+const normalizeConfig = (value: object): StoredConfig => {
+  const cleanup = normalizeCleanup(value)
+  const endpoints = normalizeEndpoints(value)
+  if (!cleanup && !endpoints) return {}
+  return { cleanup, endpoints }
+}
+
+const readConfig = async (): Promise<StoredConfig> => {
+  let raw: string
+  try {
+    raw = await readFile(configFile(), 'utf8')
+  } catch (error) {
+    if (isNodeError(error)) {
+      if (error.code === 'ENOENT') return {}
+      if (error.code === 'EACCES' || error.code === 'EPERM') {
+        throw configAccessError('read', error)
+      }
+    }
+
+    throw error
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (error) {
+    throw configFormatError(
+      `The file is not valid JSON.${error instanceof Error ? ` ${error.message}` : ''}`,
+    )
+  }
+
+  if (!isConfigObject(parsed)) {
+    throw configFormatError('The file must contain a JSON object.')
+  }
+
+  return normalizeConfig(parsed)
+}
+
 const writeConfig = async (config: StoredConfig): Promise<void> => {
   await ensureConfigDir()
   try {
@@ -305,35 +299,34 @@ const writeConfig = async (config: StoredConfig): Promise<void> => {
 
 const writeNextConfig = async (config: StoredConfig): Promise<StoredConfig> => {
   await writeConfig(config)
-
   return config
 }
 
-const isConfigObject = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export const configs = {
+  file: configFile,
+  get: async <Key extends keyof ConfigGetValue>(
+    key: Key,
+    options?: ConfigGetOptions[Key],
+  ): Promise<ConfigGetValue[Key]> => {
+    const config = await readConfig()
+    return CONFIG_GETTERS[key](config, options)
+  },
+  put: async <Key extends ConfigWritableKey>(
+    key: Key,
+    value: ConfigPutValue[Key],
+  ): Promise<StoredConfig> => {
+    const config = await readConfig()
+    return writeNextConfig(CONFIG_WRITERS[key](config, value))
+  },
+  init: async (): Promise<StoredConfig> => {
+    const config = await readConfig()
+    if (config.cleanup) return config
 
-const configFieldPath = (path: 'endpoints' | 'legacy', field: string): string => {
-  if (path === 'legacy') return field
-
-  return `${path}.${field}`
-}
-
-const configAccessError = (
-  action: 'read' | 'write',
-  error: NodeJS.ErrnoException,
-): Error => {
-  return new Error(
-    `Cannot ${action} config file ${configFile()}. ${error.message} Check the file permissions.`,
-  )
-}
-
-const configFormatError = (message: string): Error => {
-  return new Error(
-    `Invalid config file ${configFile()}: ${message} Fix the file or remove it and run secret config again.`,
-  )
-}
-
-const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
-  return error instanceof Error && 'code' in error
+    return writeNextConfig({
+      ...config,
+      cleanup: {
+        lastRunAt: 0,
+      },
+    })
+  },
 }

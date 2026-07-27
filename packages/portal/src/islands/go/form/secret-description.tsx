@@ -1,6 +1,6 @@
 export const SecretDescription = () => {
   return (
-    <div className="space-y-3 border-b border-zinc-300 border-dashed py-5">
+    <div className="space-y-3 border-b border-dashed border-zinc-300 py-5">
       <h1 className="text-base leading-2 font-semibold text-zinc-950">
         Create Secret
       </h1>

@@ -27,20 +27,16 @@ export const saveTrack = async (track: StoredTrack): Promise<void> => {
   })
 }
 
-export const loadTrack = async (trackId: string): Promise<StoredTrack | null> => {
-  try {
-    const raw = await readFile(trackFile(trackId), 'utf8')
-    const parsed: unknown = JSON.parse(raw)
-    if (!isStoredTrack(parsed, trackId)) return null
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
+}
 
-    return parsed
-  } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error) {
-      if (error.code === 'ENOENT') return null
-    }
-
-    throw error
-  }
+const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
+  return (
+    isRecord(value) &&
+    typeof value.readId === 'string' &&
+    typeof value.value === 'string'
+  )
 }
 
 const isStoredTrack = (value: unknown, trackId: string): value is StoredTrack => {
@@ -55,14 +51,17 @@ const isStoredTrack = (value: unknown, trackId: string): value is StoredTrack =>
   )
 }
 
-const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
-  return (
-    isRecord(value) &&
-    typeof value.readId === 'string' &&
-    typeof value.value === 'string'
-  )
-}
+export const loadTrack = async (trackId: string): Promise<StoredTrack | null> => {
+  try {
+    const raw = await readFile(trackFile(trackId), 'utf8')
+    const parsed: unknown = JSON.parse(raw)
+    if (!isStoredTrack(parsed, trackId)) return null
+    return parsed
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'ENOENT') return null
+    }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return value !== null && typeof value === 'object'
+    throw error
+  }
 }

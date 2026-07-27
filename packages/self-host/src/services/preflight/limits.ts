@@ -14,6 +14,40 @@ const REQUIRED_POSITIVE_NUMBER_LIMITS = [
   'API_R2_UPLOAD_URL_TTL_SECONDS',
 ] as const
 
+const assertPositiveNumber = (value: unknown, key: string): number => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+
+  throw new SelfHostError(
+    `secret.config.json limits.${key} must be a positive number.`,
+  )
+}
+
+const assertPositiveNumberArray = (
+  value: unknown,
+  key: string,
+): readonly number[] => {
+  if (Array.isArray(value) && value.length > 0) {
+    const numbers = value.filter(
+      (item: unknown): item is number =>
+        typeof item === 'number' && Number.isFinite(item) && item > 0,
+    )
+    if (numbers.length === value.length) return numbers
+  }
+
+  throw new SelfHostError(
+    `secret.config.json limits.${key} must be a non-empty array of positive numbers.`,
+  )
+}
+
+const assertMax = (values: readonly number[], max: number, key: string): void => {
+  const actual = Math.max(...values)
+  if (actual <= max) return
+
+  throw new SelfHostError(
+    `secret.config.json limits.${key} has a maximum value of ${actual}, which exceeds the HYBRID limit of ${max}.`,
+  )
+}
+
 export const limitsPreflight: PreflightCheck = {
   label: 'limits',
   run: async context => {
@@ -42,42 +76,4 @@ export const limitsPreflight: PreflightCheck = {
     assertMax(expirations, maxTtl, 'CLIENT_VALID_EXPIRATIONS_SECONDS')
     assertMax(linkCounts, maxReads, 'CLIENT_VALID_LINK_COUNTS')
   },
-}
-
-const assertPositiveNumber = (value: unknown, key: string): number => {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return value
-  }
-
-  throw new SelfHostError(
-    `secret.config.json limits.${key} must be a positive number.`,
-  )
-}
-
-const assertPositiveNumberArray = (
-  value: unknown,
-  key: string,
-): readonly number[] => {
-  if (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every(
-      item => typeof item === 'number' && Number.isFinite(item) && item > 0,
-    )
-  ) {
-    return value
-  }
-
-  throw new SelfHostError(
-    `secret.config.json limits.${key} must be a non-empty array of positive numbers.`,
-  )
-}
-
-const assertMax = (values: readonly number[], max: number, key: string): void => {
-  const actual = Math.max(...values)
-  if (actual <= max) return
-
-  throw new SelfHostError(
-    `secret.config.json limits.${key} has a maximum value of ${actual}, which exceeds the HYBRID limit of ${max}.`,
-  )
 }

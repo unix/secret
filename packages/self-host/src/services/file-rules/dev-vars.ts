@@ -1,5 +1,4 @@
 import { access, readFile, writeFile } from 'node:fs/promises'
-import type { SECRET_ENV } from '../../types'
 import { readEnvFile } from '../../utils/env'
 import { paths } from '../../utils/paths'
 import type { FileRule } from './types'
@@ -11,34 +10,17 @@ const validateTarget = async (): Promise<void> => {
   return
 }
 
-const validateParse = async (): Promise<void> => {
-  await readEnvFile(await devVarsPath())
-}
-
-const write = async (_secretEnv: SECRET_ENV): Promise<void> => {
-  const contents = await readFile(paths.rootEnv, 'utf8')
-
-  await writeFile(paths.edgeDevVars, withOptionalSecrets(contents))
-}
-
 const devVarsPath = async (): Promise<string> => {
   try {
     await access(paths.edgeDevVars)
-
     return paths.edgeDevVars
   } catch {
     return paths.rootEnv
   }
 }
 
-const withOptionalSecrets = (contents: string): string => {
-  const missing = OPTIONAL_SECRET_KEYS.filter(key => !hasEnvKey(contents, key))
-  if (missing.length === 0) return contents
-
-  const prefix = contents.replace(/\s*$/, '\n')
-  const suffix = missing.map(key => `${key}=`).join('\n')
-
-  return `${prefix}${suffix}\n`
+const validateParse = async (): Promise<void> => {
+  await readEnvFile(await devVarsPath())
 }
 
 const hasEnvKey = (contents: string, key: string): boolean => {
@@ -47,9 +29,21 @@ const hasEnvKey = (contents: string, key: string): boolean => {
   return contents.split(/\r?\n/).some(line => {
     const trimmed = line.trim()
     if (!trimmed || trimmed.startsWith('#')) return false
-
     return pattern.test(trimmed)
   })
+}
+
+const withOptionalSecrets = (contents: string): string => {
+  const missing = OPTIONAL_SECRET_KEYS.filter(key => !hasEnvKey(contents, key))
+  if (missing.length === 0) return contents
+  const prefix = contents.replace(/\s*$/, '\n')
+  const suffix = missing.map(key => `${key}=`).join('\n')
+  return `${prefix}${suffix}\n`
+}
+
+const write = async (): Promise<void> => {
+  const contents = await readFile(paths.rootEnv, 'utf8')
+  await writeFile(paths.edgeDevVars, withOptionalSecrets(contents))
 }
 
 export const devVarsRule: FileRule = {

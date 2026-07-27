@@ -21,7 +21,6 @@ describe('file cipher', () => {
     })
     const parsed = new URL(url)
     const decoded = decodeFileAccessUrl(url)
-
     expect(parsed.pathname).toBe('/s/read-id')
     expect(parsed.hash).toBe(encodeFileAccessFragment(secret))
     expect(parsed.hash).toBe(`#${secret}`)

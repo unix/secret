@@ -9,8 +9,8 @@
     "db:apply:local": "wrangler d1 execute secret-next --local --file schema.sql",
     "db:apply": "wrangler d1 execute secret-next --remote --file schema.sql",
     "db:migrate": "wrangler d1 migrations apply secret-next --remote",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "prettier": "prettier --write .",
     "typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "prettier": "@unix/prettier",
@@ -21,7 +21,9 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
+    "@unix/eslint": "^1.3.0",
     "@unix/prettier": "^0.1.0",
+    "eslint": "^10.8.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "wrangler": "^4.97.0"

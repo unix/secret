@@ -10,14 +10,9 @@ const hasFunction = (value: Record<PropertyKey, unknown>, key: string): boolean 
 }
 
 const isStandardCrypto = (value: unknown): value is StandardCrypto => {
-  if (!isRecord(value) || !hasFunction(value, 'getRandomValues')) {
-    return false
-  }
-
+  if (!isRecord(value) || !hasFunction(value, 'getRandomValues')) return false
   const subtle = value.subtle
-  if (!isRecord(subtle)) {
-    return false
-  }
+  if (!isRecord(subtle)) return false
 
   return (
     hasFunction(subtle, 'digest') &&
@@ -38,10 +33,7 @@ export const createWebStandardsRuntime = (
   cryptoValue: unknown = Reflect.get(globalThis, 'crypto'),
   name: CipherRuntimeName = RUNTIME_NAMES.WEB_STANDARDS,
 ): CipherRuntime | null => {
-  if (!isStandardCrypto(cryptoValue)) {
-    return null
-  }
-
+  if (!isStandardCrypto(cryptoValue)) return null
   const { subtle } = cryptoValue
 
   return {

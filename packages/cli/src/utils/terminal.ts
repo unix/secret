@@ -37,10 +37,13 @@ const supportsLoading = (): boolean => {
   return Boolean(output.isTTY && process.env.TERM !== 'dumb' && !process.env.CI)
 }
 
-const loadSpinner = (): Promise<YoctoSpinnerModule> => {
-  spinnerModule ??= importYoctoSpinner()
-
-  return spinnerModule
+const isYoctoSpinnerModule = (value: unknown): value is YoctoSpinnerModule => {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'default' in value &&
+    typeof value.default === 'function'
+  )
 }
 
 const importYoctoSpinner = async (): Promise<YoctoSpinnerModule> => {
@@ -49,17 +52,12 @@ const importYoctoSpinner = async (): Promise<YoctoSpinnerModule> => {
     'return import(specifier)',
   )('yocto-spinner')
   if (isYoctoSpinnerModule(imported)) return imported
-
   throw new Error('yocto-spinner module has an unexpected shape.')
 }
 
-const isYoctoSpinnerModule = (value: unknown): value is YoctoSpinnerModule => {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    'default' in value &&
-    typeof value.default === 'function'
-  )
+const loadSpinner = (): Promise<YoctoSpinnerModule> => {
+  spinnerModule ??= importYoctoSpinner()
+  return spinnerModule
 }
 
 export const loading = (text: string): LoadingTask => {
@@ -85,13 +83,11 @@ export const loading = (text: string): LoadingTask => {
     text: value => {
       currentText = value
       if (!spinner) return
-
       spinner.text = value
     },
     stop: () => {
       finished = true
       if (!spinner?.isSpinning) return
-
       spinner.stop()
     },
     succeed: value => {
@@ -117,7 +113,6 @@ export const promptText = async (message: string): Promise<string> => {
 
 export const confirm = async (message: string): Promise<boolean> => {
   const answer = (await promptText(`${message} (y/N) `)).trim().toLowerCase()
-
   return answer === 'y' || answer === 'yes'
 }
 

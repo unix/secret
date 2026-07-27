@@ -28,7 +28,6 @@ export class GeneratorService {
         writeTask.text(status)
       })
       writeTask.succeed('Self-host files generated.')
-
       return files
     } catch (error) {
       writeTask.fail('Self-host file generation failed.')

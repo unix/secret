@@ -1,4 +1,4 @@
-import { RUNTIME_PREFERENCE } from './utils/constants'
+import type { RUNTIME_PREFERENCE } from './utils/constants'
 import type { CipherRuntime } from './runtimes/types'
 
 export type { CipherRuntime, CipherRuntimeName } from './runtimes/types'

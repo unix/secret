@@ -16,7 +16,6 @@ const storageKey = (trackId: string): string => {
 
 const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
   if (typeof value !== 'object' || value === null) return false
-
   const access = 'access' in value ? value.access : undefined
 
   return (
@@ -29,10 +28,8 @@ const isStoredTrackLink = (value: unknown): value is StoredTrackLink => {
 }
 
 const isStoredTrackLinks = (value: unknown): value is StoredTrackLinks => {
-  if (typeof value !== 'object' || value === null || !('links' in value)) {
+  if (typeof value !== 'object' || value === null || !('links' in value))
     return false
-  }
-
   return Array.isArray(value.links) && value.links.every(isStoredTrackLink)
 }
 
@@ -40,7 +37,6 @@ export const loadTrackLinks = (trackId: string): readonly StoredTrackLink[] => {
   try {
     const item = window.sessionStorage.getItem(storageKey(trackId))
     if (!item) return []
-
     const value: unknown = JSON.parse(item)
     if (isStoredTrackLinks(value)) return value.links
   } catch {

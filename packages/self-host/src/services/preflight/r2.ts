@@ -11,41 +11,16 @@ type SignedR2Input = {
   readonly secretAccessKey: string
 }
 
-export const r2Preflight: PreflightCheck = {
-  label: 'r2',
-  run: async context => {
-    const env = requireEnv(context)
-
-    await wranglerJson(['r2', 'bucket', 'info', env.R2_BUCKET_NAME, '--json'], env, {
-      failure:
-        'R2 bucket check failed. Verify your Wrangler session, R2_ACCOUNT_ID, and R2_BUCKET_NAME.',
-    })
-    await assertR2Credentials({
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      accountId: env.R2_ACCOUNT_ID,
-      bucketName: env.R2_BUCKET_NAME,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    })
-  },
+const sha256Hex = (value: string): string => {
+  return createHash('sha256').update(value).digest('hex')
 }
 
-const assertR2Credentials = async (input: SignedR2Input): Promise<void> => {
-  const request = signedR2ListRequest(input)
-  const response = await fetch(request.url, {
-    headers: request.headers,
-    method: 'GET',
-  })
-  if (response.ok) return
-
-  throw new SelfHostError(
-    `R2 check failed. Verify R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME. HTTP ${response.status}: ${await safeText(response)}`,
-  )
+const hmacHex = (key: Buffer, value: string): string => {
+  return createHmac('sha256', key).update(value).digest('hex')
 }
 
-const safeText = async (response: Response): Promise<string> => {
-  const text = await response.text()
-
-  return text.slice(0, 500)
+const hmac = (key: string | Buffer, value: string): Buffer => {
+  return createHmac('sha256', key).update(value).digest()
 }
 
 const signedR2ListRequest = ({
@@ -109,14 +84,38 @@ const signedR2ListRequest = ({
   }
 }
 
-const sha256Hex = (value: string): string => {
-  return createHash('sha256').update(value).digest('hex')
+const safeText = async (response: Response): Promise<string> => {
+  const text = await response.text()
+  return text.slice(0, 500)
 }
 
-const hmac = (key: string | Buffer, value: string): Buffer => {
-  return createHmac('sha256', key).update(value).digest()
+const assertR2Credentials = async (input: SignedR2Input): Promise<void> => {
+  const request = signedR2ListRequest(input)
+  const response = await fetch(request.url, {
+    headers: request.headers,
+    method: 'GET',
+  })
+  if (response.ok) return
+
+  throw new SelfHostError(
+    `R2 check failed. Verify R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME. HTTP ${response.status}: ${await safeText(response)}`,
+  )
 }
 
-const hmacHex = (key: Buffer, value: string): string => {
-  return createHmac('sha256', key).update(value).digest('hex')
+export const r2Preflight: PreflightCheck = {
+  label: 'r2',
+  run: async context => {
+    const env = requireEnv(context)
+
+    await wranglerJson(['r2', 'bucket', 'info', env.R2_BUCKET_NAME, '--json'], env, {
+      failure:
+        'R2 bucket check failed. Verify your Wrangler session, R2_ACCOUNT_ID, and R2_BUCKET_NAME.',
+    })
+    await assertR2Credentials({
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      accountId: env.R2_ACCOUNT_ID,
+      bucketName: env.R2_BUCKET_NAME,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    })
+  },
 }

@@ -24,6 +24,25 @@ const CLOUDFLARE_PREFLIGHT_CHECKS: readonly PreflightCheck[] = [
   r2Preflight,
 ]
 
+const runChecks = async (
+  text: string,
+  successText: string,
+  context: PreflightContext,
+  checks: readonly PreflightCheck[],
+): Promise<void> => {
+  const task = loading(text)
+  try {
+    for (const check of checks) {
+      task.text(`${text} (${check.label})`)
+      await check.run(context)
+    }
+    task.succeed(successText)
+  } catch (error) {
+    task.fail(`${text.replace(/\.\.\.$/, '')} failed.`)
+    throw error
+  }
+}
+
 @Service()
 export class PreflightService {
   async run(): Promise<{
@@ -49,24 +68,5 @@ export class PreflightService {
       config: requireConfig(context),
       env: requireEnv(context),
     }
-  }
-}
-
-const runChecks = async (
-  text: string,
-  successText: string,
-  context: PreflightContext,
-  checks: readonly PreflightCheck[],
-): Promise<void> => {
-  const task = loading(text)
-  try {
-    for (const check of checks) {
-      task.text(`${text} (${check.label})`)
-      await check.run(context)
-    }
-    task.succeed(successText)
-  } catch (error) {
-    task.fail(`${text.replace(/\.\.\.$/, '')} failed.`)
-    throw error
   }
 }

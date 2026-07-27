@@ -1,5 +1,5 @@
 import { base64UrlToBytes, bytesToBase64Url } from '../bytes'
-import { resolveCipherRuntime } from '../../runtimes'
+import type { resolveCipherRuntime } from '../../runtimes'
 import { CIPHER_FORMAT, CRYPTO_BYTES, ERRORS } from '../../utils/constants'
 import { CipherError } from '../../utils/errors'
 

@@ -29,6 +29,5 @@ export const evmAddressStatus = async ({
     return 'unavailable'
   }
   if (code === EMPTY_CODE) return 'personal'
-
   return 'unsupported'
 }

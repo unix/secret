@@ -41,21 +41,10 @@ const initialState: GoSecretState = {
 }
 
 const reducer = (state: GoSecretState, action: GoSecretAction): GoSecretState => {
-  if (action.type === 'set-access') {
-    return { ...state, access: action.access }
-  }
-
-  if (action.type === 'set-mode') {
-    return { ...state, mode: action.mode }
-  }
-
-  if (action.type === 'set-value') {
-    return { ...state, value: action.value }
-  }
-
-  if (action.type === 'set-file') {
-    return { ...state, file: action.file }
-  }
+  if (action.type === 'set-access') return { ...state, access: action.access }
+  if (action.type === 'set-mode') return { ...state, mode: action.mode }
+  if (action.type === 'set-value') return { ...state, value: action.value }
+  if (action.type === 'set-file') return { ...state, file: action.file }
 
   if (action.type === 'set-expires') {
     return {
@@ -64,17 +53,10 @@ const reducer = (state: GoSecretState, action: GoSecretAction): GoSecretState =>
     }
   }
 
-  if (action.type === 'set-reads') {
+  if (action.type === 'set-reads')
     return { ...state, settings: { ...state.settings, reads: action.reads } }
-  }
-
-  if (action.type === 'set-status') {
-    return { ...state, status: action.status }
-  }
-
-  if (action.type === 'set-busy') {
-    return { ...state, busy: action.busy }
-  }
+  if (action.type === 'set-status') return { ...state, status: action.status }
+  if (action.type === 'set-busy') return { ...state, busy: action.busy }
 
   return {
     ...state,
@@ -103,10 +85,8 @@ export const useGoSecretState = () => {
   )
   const fieldHint = useMemo(() => {
     if (state.mode === 'file') return 'Files are encrypted locally before upload.'
-    if (state.mode === 'password') {
+    if (state.mode === 'password')
       return 'Passwords use the same short-lived secret flow.'
-    }
-
     return ''
   }, [state.mode])
   const disabled =

@@ -110,7 +110,7 @@
   }
 
   .post-content blockquote {
-    @apply mt-6 border-l-2 pl-6 italic mb-4;
+    @apply mt-6 mb-4 border-l-2 pl-6 italic;
   }
 
   .post-content ul {
@@ -126,13 +126,13 @@
   }
 
   .post-content img {
-    @apply w-13/20 mx-auto my-6 max-w-full rounded-md;
+    @apply mx-auto my-6 w-13/20 max-w-full rounded-md;
     -webkit-user-drag: none;
     user-select: none;
   }
 
   .post-content figure[data-type='image-figure'] {
-    @apply w-13/20 mx-auto my-6 max-w-full;
+    @apply mx-auto my-6 w-13/20 max-w-full;
   }
 
   .post-content figure[data-type='image-figure'] img {

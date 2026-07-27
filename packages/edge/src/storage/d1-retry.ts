@@ -44,7 +44,6 @@ const errorMessages = (error: unknown): readonly string[] => {
 
 export const isTransientD1Error = (error: unknown): boolean => {
   const message = errorMessages(error).join('\n')
-
   return D1_TRANSIENT_ERROR_PARTS.some(part => message.includes(part))
 }
 

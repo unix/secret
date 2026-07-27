@@ -25,7 +25,6 @@ export class Track {
     try {
       const trackId = args.inputs[0]
       if (!trackId) throw new CliUserError('Usage: secret track <trackId>')
-
       const result = await this.track.load(trackId)
       printTrackSummary(result.response, result.track)
       console.log('')
@@ -38,7 +37,6 @@ export class Track {
       console.log(yellow('No local read links were found for this track id.'))
     } catch (error) {
       if (printExpectedError(error)) return
-
       throw error
     }
   }

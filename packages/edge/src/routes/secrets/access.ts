@@ -69,7 +69,6 @@ export const evmAccessPolicy = async ({
   }
 
   if (!value.address) return 'invalid'
-
   let address: `0x${string}`
   try {
     address = getAddress(value.address)

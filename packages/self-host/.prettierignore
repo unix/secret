@@ -1,0 +1,8 @@
+.astro/
+.wrangler/
+build/
+coverage/
+dist/
+migrations/
+self-host.ts
+*.sql

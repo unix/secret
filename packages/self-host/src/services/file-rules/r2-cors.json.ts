@@ -26,6 +26,19 @@ const validateTarget = async (): Promise<void> => {
   await assertFileExists(paths.edgeR2Cors, LABEL)
 }
 
+const isR2Cors = (value: unknown): value is R2Cors => {
+  return value !== null && typeof value === 'object'
+}
+
+const r2Cors = async (): Promise<R2Cors> => {
+  const parsed = parseJsonFile(
+    await readExistingFile(paths.edgeR2Cors, LABEL),
+    LABEL,
+  )
+  if (isR2Cors(parsed)) return parsed
+  throw new SelfHostError(`${LABEL} must be a JSON object.`)
+}
+
 const validateParse = async (): Promise<void> => {
   const parsed = await r2Cors()
   if (!Array.isArray(parsed.rules)) {
@@ -33,10 +46,49 @@ const validateParse = async (): Promise<void> => {
   }
 }
 
+const uniqueOrigins = (origins: readonly string[]): readonly string[] => {
+  return Array.from(new Set(origins))
+}
+
+const isLocalhostOrigin = (origin: string): boolean => {
+  let url: URL
+  try {
+    url = new URL(origin)
+  } catch {
+    return false
+  }
+
+  return url.hostname === 'localhost'
+}
+
+const allowedOrigins = (
+  origins: readonly string[] | undefined,
+  portalOrigin: string,
+): readonly string[] => {
+  return uniqueOrigins([
+    ...DEV_ORIGINS,
+    ...(origins ?? []).filter(isLocalhostOrigin),
+    portalOrigin,
+  ])
+}
+
+const localhostOnlyRule = (rule: R2CorsRule): R2CorsRule => {
+  if (!rule.allowed?.origins) return rule
+
+  return {
+    ...rule,
+    allowed: {
+      ...rule.allowed,
+      origins: rule.allowed.origins.filter(isLocalhostOrigin),
+    },
+  }
+}
+
 const write = async (secretEnv: SECRET_ENV): Promise<void> => {
   const parsed = await r2Cors()
-  const rules = Array.isArray(parsed.rules) ? parsed.rules : []
-  const [firstRule, ...restRules] = rules
+  const rules = parsed.rules ?? []
+  const firstRule = rules.at(0)
+  const restRules = rules.slice(1)
   const next: R2Cors = {
     ...parsed,
     rules: [
@@ -55,58 +107,6 @@ const write = async (secretEnv: SECRET_ENV): Promise<void> => {
   }
 
   await writeFile(paths.edgeR2Cors, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
-}
-
-const r2Cors = async (): Promise<R2Cors> => {
-  const parsed = parseJsonFile(
-    await readExistingFile(paths.edgeR2Cors, LABEL),
-    LABEL,
-  )
-  if (isR2Cors(parsed)) return parsed
-
-  throw new SelfHostError(`${LABEL} must be a JSON object.`)
-}
-
-const allowedOrigins = (
-  origins: readonly string[] | undefined,
-  portalOrigin: string,
-): readonly string[] => {
-  return uniqueOrigins([
-    ...DEV_ORIGINS,
-    ...(origins ?? []).filter(isLocalhostOrigin),
-    portalOrigin,
-  ])
-}
-
-const uniqueOrigins = (origins: readonly string[]): readonly string[] => {
-  return Array.from(new Set(origins))
-}
-
-const localhostOnlyRule = (rule: R2CorsRule): R2CorsRule => {
-  if (!rule.allowed?.origins) return rule
-
-  return {
-    ...rule,
-    allowed: {
-      ...rule.allowed,
-      origins: rule.allowed.origins.filter(isLocalhostOrigin),
-    },
-  }
-}
-
-const isLocalhostOrigin = (origin: string): boolean => {
-  let url: URL
-  try {
-    url = new URL(origin)
-  } catch {
-    return false
-  }
-
-  return url.hostname === 'localhost'
-}
-
-const isR2Cors = (value: unknown): value is R2Cors => {
-  return value !== null && typeof value === 'object'
 }
 
 export const r2CorsJsonRule: FileRule = {

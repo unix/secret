@@ -16,6 +16,5 @@ export const decodedAddress = (result: string): `0x${string}` | null => {
     throw new Error('Ethereum RPC returned an invalid address result.')
   }
   if (ZERO_HEX_WORD_PATTERN.test(result)) return null
-
   return checksumAddress(`0x${result.slice(-40)}`)
 }

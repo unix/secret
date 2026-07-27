@@ -2,11 +2,9 @@ import { VALID_EXPIRATIONS, VALID_LINK_COUNTS } from '../limits'
 
 const expirationLabel = (seconds: number): string => {
   if (seconds < 60) return `${seconds} seconds`
-  if (seconds % 3600 === 0) {
+  if (seconds % 3600 === 0)
     return `${seconds / 3600} hour${seconds === 3600 ? '' : 's'}`
-  }
   if (seconds % 60 === 0) return `${seconds / 60} minutes`
-
   return `${seconds} seconds`
 }
 

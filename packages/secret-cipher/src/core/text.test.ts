@@ -17,7 +17,6 @@ describe('text cipher', () => {
   it('seals and opens text with the auto runtime', async () => {
     const sealed = await sealText('a short private note')
     const opened = await openText(sealed)
-
     expect(sealed.cipher).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/)
     expect(sealed.cipher).not.toContain('private')
     expect(sealed.secret).toMatch(/^[A-Za-z0-9_-]+$/)
@@ -47,7 +46,6 @@ describe('text cipher', () => {
     })
     const parsed = new URL(url)
     const decoded = decodeTextAccessUrl(url)
-
     expect(parsed.pathname).toBe('/s/read%20id%2Fwith%20slash')
     expect(parsed.search).toBe('')
     expect(parsed.hash).toBe(encodeTextAccessFragment(sealed.secret))

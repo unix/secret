@@ -8,7 +8,7 @@ import HeadLayout from '@/layouts/head.layout.astro'
 
 <HeadLayout>
   <main
-    class="min-h-svh bg-white text-zinc-950 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px]">
+    class="min-h-svh bg-white [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:22px_22px] text-zinc-950">
     <SecretHeader />
 
     <section
@@ -18,15 +18,21 @@ import HeadLayout from '@/layouts/head.layout.astro'
         <h1
           aria-label="SECRET"
           class="text-5xl leading-none font-semibold text-zinc-950">
-          <span aria-hidden="true" data-binary-title data-binary-value="SECRET">SECRET</span>
+          <span aria-hidden="true" data-binary-title data-binary-value="SECRET"
+            >SECRET</span
+          >
         </h1>
         <p
           class="mt-7 w-full max-w-2xl text-sm leading-6 font-normal text-zinc-600 md:text-base md:leading-7">
-          Share secrets that stay secret. Send encrypted text and files <br class="max-md:hidden" />
+          Share secrets that stay secret. Send encrypted text and files <br
+            class="max-md:hidden"
+          />
           without giving the server the key. For more, refer to
           <a
             href="/intro"
-            class="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-950">Introduction</a>.
+            class="font-medium text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-950"
+            >Introduction</a
+          >.
         </p>
         <div
           class="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-xs font-medium text-zinc-500">

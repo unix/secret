@@ -7,19 +7,10 @@
           "http://localhost:3000",
           "https://secret.witt.im"
         ],
-        "methods": [
-          "GET",
-          "HEAD",
-          "PUT"
-        ],
-        "headers": [
-          "Content-Type"
-        ]
+        "methods": ["GET", "HEAD", "PUT"],
+        "headers": ["Content-Type"]
       },
-      "exposeHeaders": [
-        "Content-Length",
-        "ETag"
-      ],
+      "exposeHeaders": ["Content-Length", "ETag"],
       "maxAgeSeconds": 3600
     }
   ]

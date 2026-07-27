@@ -15,7 +15,6 @@ const isEthRpcResponse = (value: unknown): value is EthRpcResponse => {
 
 const ethRpcErrorMessage = (error: unknown): string => {
   if (isRecord(error) && typeof error.message === 'string') return error.message
-
   return 'Ethereum RPC call failed.'
 }
 

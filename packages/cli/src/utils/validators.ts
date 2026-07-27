@@ -10,15 +10,17 @@ import { CliUserError } from './expected-error'
 
 export const optionString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value
-
   return undefined
 }
 
 export const optionNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value
   if (typeof value === 'string' && value.trim()) return Number(value)
-
   return undefined
+}
+
+const includesNumber = (values: readonly number[], value: number): boolean => {
+  return values.some(item => item === value)
 }
 
 export const expirationSeconds = (value: unknown): number => {
@@ -49,8 +51,4 @@ export const linkCount = (value: unknown): number => {
   }
 
   throw new CliUserError(`Links must be one of ${VALID_LINK_COUNTS.join(', ')}.`)
-}
-
-const includesNumber = (values: readonly number[], value: number): boolean => {
-  return values.some(item => item === value)
 }

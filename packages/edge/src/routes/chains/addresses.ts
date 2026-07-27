@@ -8,26 +8,17 @@ const RPC_UNAVAILABLE_MESSAGE = 'Ethereum RPC is unavailable.'
 
 export const evmAddressStatusRoute = async (c: AppContext): Promise<Response> => {
   const provider = ethRpcProvider(c.env)
-  if (!provider) {
+  if (!provider)
     return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
-  }
-
   const address = c.req.param('address')
-  if (!address) {
-    return c.body(null, 400)
-  }
+  if (!address) return c.body(null, 400)
 
   const status = await evmAddressStatus({
     address,
     provider,
   })
-  if (status === 'unavailable') {
-    return http.badGateway(c, RPC_UNAVAILABLE_MESSAGE)
-  }
-  if (status !== 'personal') {
-    return c.body(null, 400)
-  }
-
+  if (status === 'unavailable') return http.badGateway(c, RPC_UNAVAILABLE_MESSAGE)
+  if (status !== 'personal') return c.body(null, 400)
   c.header('Cache-Control', SUCCESS_CACHE_CONTROL)
   return http.noContent(c)
 }

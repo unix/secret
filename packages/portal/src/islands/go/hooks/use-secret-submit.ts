@@ -57,7 +57,6 @@ const byteLength = (value: string): number => {
 const chunkToArrayBuffer = (chunk: Uint8Array): ArrayBuffer => {
   const buffer = new ArrayBuffer(chunk.byteLength)
   new Uint8Array(buffer).set(chunk)
-
   return buffer
 }
 
@@ -121,17 +120,13 @@ const validateSettings = ({
   readonly expiresInSeconds: number
   readonly reads: number
 }): string | null => {
-  if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds <= 0) {
+  if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds <= 0)
     return 'Choose a valid expiration.'
-  }
-  if (expiresInSeconds > MAX_EXPIRATION_SECONDS) {
+  if (expiresInSeconds > MAX_EXPIRATION_SECONDS)
     return `Expiration cannot exceed ${MAX_EXPIRATION_SECONDS} seconds.`
-  }
-  if (!Number.isSafeInteger(reads) || reads <= 0) {
+  if (!Number.isSafeInteger(reads) || reads <= 0)
     return 'Choose a valid read link count.'
-  }
   if (reads > MAX_LINK_COUNT) return `Read links cannot exceed ${MAX_LINK_COUNT}.`
-
   return null
 }
 
@@ -146,8 +141,6 @@ const accessInput = (
       type: access.type,
     }
   }
-  if (!access.address) return undefined
-
   return {
     address: access.address,
     chainId: access.chainId,

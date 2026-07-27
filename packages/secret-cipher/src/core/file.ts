@@ -93,6 +93,18 @@ export type DecodedFileAccessUrl = DecodedFileAccessFragment & {
 
 export const defaultFileChunkSizeBytes = DEFAULT_FILE_CHUNK_SIZE_BYTES
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
+}
+
+const isSafeNonNegativeInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
+const isSafePositiveInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+}
+
 const fileManifestFromValue = (value: unknown): FileManifest => {
   if (
     isRecord(value) &&
@@ -115,18 +127,6 @@ const fileManifestFromValue = (value: unknown): FileManifest => {
   }
 
   throw new CipherError(ERRORS.INVALID_CIPHERTEXT, 'Invalid file manifest.')
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return value !== null && typeof value === 'object'
-}
-
-const isSafePositiveInteger = (value: unknown): value is number => {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
-}
-
-const isSafeNonNegativeInteger = (value: unknown): value is number => {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
 
 export const createFileSecret = async (
@@ -242,7 +242,6 @@ export const openFileManifest = async ({
     })
 
     const manifest: unknown = JSON.parse(bytesToUtf8(plaintext))
-
     return fileManifestFromValue(manifest)
   } catch (error) {
     throw new CipherError(
@@ -253,6 +252,37 @@ export const openFileManifest = async ({
       },
     )
   }
+}
+
+const nonceFromIndex = (nonceBase: Uint8Array, chunkIndex: number): Uint8Array => {
+  if (nonceBase.byteLength !== CRYPTO_BYTES.IV) {
+    throw new CipherError(ERRORS.INVALID_NONCE, `Expected ${CRYPTO_BYTES.IV} bytes.`)
+  }
+
+  const output = new Uint8Array(nonceBase)
+  let value = BigInt(chunkIndex)
+  for (let index = CRYPTO_BYTES.IV - 1; index >= 0; index -= 1) {
+    output[index] ^= Number(value & 0xffn)
+    value >>= 8n
+  }
+
+  return output
+}
+
+const chunkAdditionalData = ({
+  chunkIndex,
+  chunkCount,
+  chunkSize,
+  plaintextLength,
+}: {
+  readonly chunkIndex: number
+  readonly chunkCount: number
+  readonly chunkSize: number
+  readonly plaintextLength: number
+}): Uint8Array => {
+  return utf8ToBytes(
+    `${SECRET_CONTEXT.PREFIX}file-chunk:${chunkIndex}:${chunkCount}:${chunkSize}:${plaintextLength}`,
+  )
 }
 
 export const sealFileChunk = async ({
@@ -339,35 +369,4 @@ export const openFileChunk = async ({
       plaintextLength,
     }),
   })
-}
-
-const chunkAdditionalData = ({
-  chunkIndex,
-  chunkCount,
-  chunkSize,
-  plaintextLength,
-}: {
-  readonly chunkIndex: number
-  readonly chunkCount: number
-  readonly chunkSize: number
-  readonly plaintextLength: number
-}): Uint8Array => {
-  return utf8ToBytes(
-    `${SECRET_CONTEXT.PREFIX}file-chunk:${chunkIndex}:${chunkCount}:${chunkSize}:${plaintextLength}`,
-  )
-}
-
-const nonceFromIndex = (nonceBase: Uint8Array, chunkIndex: number): Uint8Array => {
-  if (nonceBase.byteLength !== CRYPTO_BYTES.IV) {
-    throw new CipherError(ERRORS.INVALID_NONCE, `Expected ${CRYPTO_BYTES.IV} bytes.`)
-  }
-
-  const output = new Uint8Array(nonceBase)
-  let value = BigInt(chunkIndex)
-  for (let index = CRYPTO_BYTES.IV - 1; index >= 0; index -= 1) {
-    output[index] ^= Number(value & 0xffn)
-    value >>= 8n
-  }
-
-  return output
 }

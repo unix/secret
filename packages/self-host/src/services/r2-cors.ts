@@ -8,20 +8,6 @@ import { loading } from '../utils/terminal'
 
 const execFileAsync = promisify(execFile)
 
-@Service()
-export class R2CorsService {
-  async apply({ env }: { readonly env: EnvRecord }): Promise<void> {
-    const task = loading('Applying R2 CORS policy...')
-    try {
-      await applyR2Cors(env)
-      task.succeed('R2 CORS policy applied.')
-    } catch (error) {
-      task.fail('R2 CORS configuration failed.')
-      throw r2CorsError(error)
-    }
-  }
-}
-
 const applyR2Cors = async (env: EnvRecord): Promise<void> => {
   await execFileAsync(
     'pnpm',
@@ -45,6 +31,27 @@ const applyR2Cors = async (env: EnvRecord): Promise<void> => {
   )
 }
 
+const isNodeError = (
+  error: unknown,
+): error is Error & {
+  readonly code?: string
+  readonly stderr?: string
+  readonly stdout?: string
+} => {
+  return error instanceof Error
+}
+
+const errorMessage = (error: unknown): string => {
+  if (!isNodeError(error)) return ''
+
+  const details = [error.stderr, error.stdout, error.message]
+    .filter(Boolean)
+    .join('\n')
+    .trim()
+
+  return details ? `\n${details.slice(0, 1000)}` : ''
+}
+
 const r2CorsError = (error: unknown): SelfHostError => {
   if (isNodeError(error) && error.code === 'ENOENT') {
     return new SelfHostError(
@@ -59,23 +66,16 @@ const r2CorsError = (error: unknown): SelfHostError => {
   )
 }
 
-const errorMessage = (error: unknown): string => {
-  if (!isNodeError(error)) return ''
-
-  const details = [error.stderr, error.stdout, error.message]
-    .filter(Boolean)
-    .join('\n')
-    .trim()
-
-  return details ? `\n${details.slice(0, 1000)}` : ''
-}
-
-const isNodeError = (
-  error: unknown,
-): error is Error & {
-  readonly code?: string
-  readonly stderr?: string
-  readonly stdout?: string
-} => {
-  return error instanceof Error
+@Service()
+export class R2CorsService {
+  async apply({ env }: { readonly env: EnvRecord }): Promise<void> {
+    const task = loading('Applying R2 CORS policy...')
+    try {
+      await applyR2Cors(env)
+      task.succeed('R2 CORS policy applied.')
+    } catch (error) {
+      task.fail('R2 CORS configuration failed.')
+      throw r2CorsError(error)
+    }
+  }
 }

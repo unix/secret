@@ -1,7 +1,7 @@
 import { Args, Command, FuncArgs, Handler } from 'func'
 import { RevealService } from '../services/reveal'
 import { CliUserError, printExpectedError } from '../utils/expected-error'
-import { confirm, loading, printHelp, red, yellow } from '../utils/terminal'
+import { confirm, loading, printHelp, red } from '../utils/terminal'
 
 @Command({
   name: 'reveal',
@@ -50,11 +50,9 @@ export class Reveal {
         downloadTask.stop,
       )
       if (!outputPath) return
-
       downloadTask.succeed(`File saved to ${outputPath}`)
     } catch (error) {
       if (printExpectedError(error)) return
-
       throw error
     }
   }
@@ -65,7 +63,6 @@ export class Reveal {
     } catch (error) {
       onStop()
       if (printExpectedError(error)) return null
-
       throw error
     }
   }
@@ -80,7 +77,6 @@ export class Reveal {
     } catch (error) {
       onStop()
       if (printExpectedError(error)) return null
-
       throw error
     }
   }

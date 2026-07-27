@@ -14,22 +14,6 @@ const REQUIRED_ENV_KEYS = [
   'D1_DATABASE_NAME',
 ] as const
 
-export const envPreflight: PreflightCheck = {
-  label: 'env',
-  run: async context => {
-    await assertEnvFile()
-    const env = await readEnvFile(paths.rootEnv)
-    assertEnvComplete(env)
-    context.env = env
-  },
-}
-
-export const requireEnv = (context: PreflightContext): EnvRecord => {
-  if (context.env) return context.env
-
-  throw new SelfHostError('Preflight order error: env is not loaded yet.')
-}
-
 const assertEnvFile = async (): Promise<void> => {
   try {
     await access(paths.rootEnv)
@@ -47,4 +31,19 @@ const assertEnvComplete = (env: EnvRecord): void => {
   throw new SelfHostError(
     `The root .env file is missing required values: ${missing.join(', ')}`,
   )
+}
+
+export const envPreflight: PreflightCheck = {
+  label: 'env',
+  run: async context => {
+    await assertEnvFile()
+    const env = await readEnvFile(paths.rootEnv)
+    assertEnvComplete(env)
+    context.env = env
+  },
+}
+
+export const requireEnv = (context: PreflightContext): EnvRecord => {
+  if (context.env) return context.env
+  throw new SelfHostError('Preflight order error: env is not loaded yet.')
 }

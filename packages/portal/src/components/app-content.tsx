@@ -9,7 +9,7 @@ export default function AppContent({
   return (
     <section
       className={cn(
-        'mx-auto w-full max-w-3xl px-16 max-md:px-6 max-md:max-w-full',
+        'mx-auto w-full max-w-3xl px-16 max-md:max-w-full max-md:px-6',
         className,
       )}
       {...props}>

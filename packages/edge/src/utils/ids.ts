@@ -20,7 +20,6 @@ export const randomAlphanumericId = (length: number): string => {
     crypto.getRandomValues(bytes)
     bytes.forEach(byte => {
       if (value.length >= length || byte >= ALPHANUMERIC_RANDOM_LIMIT) return
-
       value += ALPHANUMERIC_CHARS[byte % ALPHANUMERIC_CHARS.length]
     })
   }

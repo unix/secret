@@ -40,19 +40,16 @@ const keyFor = ({
 
 const shouldQuery = (value: string): boolean => {
   const normalized = normalizedValue(value)
-
   return normalized.length >= 1
 }
 
 const recordHit = (record: EvmAccessHistoryRecord): number => {
   if (!Number.isSafeInteger(record.hit) || record.hit < 1) return 1
-
   return record.hit
 }
 
 const nextHit = (record: EvmAccessHistoryRecord | null): number => {
   if (!record) return 1
-
   return recordHit(record) + 1
 }
 
@@ -62,10 +59,8 @@ const recentEnsByAddress = (
   const pairs = new Map<string, string>()
   for (const record of records) {
     if (record.kind !== 'ens') continue
-
     const normalizedAddress = normalizedValue(record.address)
     if (pairs.has(normalizedAddress)) continue
-
     pairs.set(normalizedAddress, record.value)
   }
 
@@ -75,7 +70,6 @@ const recentEnsByAddress = (
 const matches = async (value: string): Promise<readonly EvmAccessHistoryMatch[]> => {
   const normalized = normalizedValue(value)
   if (!shouldQuery(normalized)) return []
-
   const records = await cache.list()
   const ensByAddress = recentEnsByAddress(records)
 
@@ -85,7 +79,6 @@ const matches = async (value: string): Promise<readonly EvmAccessHistoryMatch[]>
       const leftHit = recordHit(left)
       const rightHit = recordHit(right)
       if (leftHit !== rightHit) return rightHit - leftHit
-
       return right.updatedAt - left.updatedAt
     })
     .slice(0, 5)

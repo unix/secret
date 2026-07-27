@@ -12,18 +12,6 @@ const PROJECT_LIMIT_PREFIXES: Record<GeneratedProject, readonly string[]> = {
   portal: ['CLIENT_', 'HYBRID_'],
 }
 
-export const generatedSelfHostFile = (
-  project: GeneratedProject,
-  config: SelfHostConfig,
-): string => {
-  const selfHost = {
-    configs: projectConfigs(project, config),
-    limits: projectLimits(project, config),
-  }
-
-  return `${GENERATED_HEADER}export const selfHost = ${JSON.stringify(selfHost, null, 2)} as const\n\nexport default selfHost\n`
-}
-
 const projectConfigs = (
   project: GeneratedProject,
   config: SelfHostConfig,
@@ -50,4 +38,16 @@ const projectLimits = (
   )
 
   return Object.fromEntries(entries)
+}
+
+export const generatedSelfHostFile = (
+  project: GeneratedProject,
+  config: SelfHostConfig,
+): string => {
+  const selfHost = {
+    configs: projectConfigs(project, config),
+    limits: projectLimits(project, config),
+  }
+
+  return `${GENERATED_HEADER}export const selfHost = ${JSON.stringify(selfHost, null, 2)} as const\n\nexport default selfHost\n`
 }

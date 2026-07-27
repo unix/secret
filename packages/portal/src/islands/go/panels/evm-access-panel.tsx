@@ -51,7 +51,6 @@ type EnsState =
 const buttonLabel = (stage: VerificationStage): string => {
   if (stage === 'verifying-ens') return 'Verifying ENS'
   if (stage === 'checking-address') return 'Checking Address'
-
   return 'Confirm'
 }
 
@@ -67,10 +66,6 @@ const normalizedAddress = (value: string): `0x${string}` | null => {
   }
 }
 
-const isEnsCandidate = (value: string): boolean => {
-  return normalizedEnsName(value) !== null
-}
-
 const normalizedEnsName = (value: string): string | null => {
   const trimmed = value.trim()
   if (!trimmed.includes('.') || normalizedAddress(trimmed)) return null
@@ -82,14 +77,16 @@ const normalizedEnsName = (value: string): string | null => {
   }
 }
 
+const isEnsCandidate = (value: string): boolean => {
+  return normalizedEnsName(value) !== null
+}
+
 const addressError = (value: string, ensState: EnsState): string | null => {
   const trimmed = value.trim()
   if (!trimmed) return null
   if (isEnsCandidate(trimmed)) {
-    if (ensState.status === 'invalid' && ensState.input === trimmed) {
+    if (ensState.status === 'invalid' && ensState.input === trimmed)
       return ensState.error
-    }
-
     return null
   }
   if (!normalizedAddress(trimmed))
@@ -100,15 +97,12 @@ const addressError = (value: string, ensState: EnsState): string | null => {
 
 const accessLabel = (access: EvmAccessRequirement): string => {
   if (typeof access.ens === 'string') return access.ens
-  if (access.address) return shortAddress(access.address)
-
-  return 'ETH'
+  return shortAddress(access.address)
 }
 
 const historyMatchDescription = (match: EvmAccessHistoryMatch): string | null => {
   if (match.kind === 'ens') return match.address
   if (match.relatedEns) return match.relatedEns
-
   return null
 }
 
@@ -127,7 +121,6 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
 
   useEffect(() => {
     if (!open) return
-
     setEnsState({ status: 'idle' })
     setStatusError(null)
     setVerificationStage('idle')
@@ -138,7 +131,6 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
     setStatusError(null)
     setEnsState(current => {
       if (current.status === 'idle' || current.input === value.trim()) return current
-
       return { status: 'idle' }
     })
   }, [value])
@@ -156,12 +148,10 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
       .matches(value)
       .then(matches => {
         if (cancelled) return
-
         setHistoryMatches(matches)
       })
       .catch(() => {
         if (cancelled) return
-
         setHistoryMatches([])
       })
 
@@ -173,11 +163,9 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
   useLayoutEffect(() => {
     const button = confirmButtonFrameRef.current?.firstElementChild
     if (!(button instanceof HTMLElement)) return
-
     const width = Math.ceil(button.getBoundingClientRect().width)
     setConfirmButtonWidth(current => {
       if (current === width) return current
-
       return width
     })
   }, [open, verificationStage])
@@ -199,9 +187,11 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
       setStatusError(null)
       try {
         await verifyEvmAddressStatus(address)
-      } catch (error) {
+      } catch (caughtError) {
         setStatusError(
-          error instanceof Error ? error.message : UNSUPPORTED_EVM_ACCOUNT_MESSAGE,
+          caughtError instanceof Error
+            ? caughtError.message
+            : UNSUPPORTED_EVM_ACCOUNT_MESSAGE,
         )
         return
       } finally {
@@ -219,20 +209,20 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
     }
 
     if (!ensName) return
-
     setVerificationStage('verifying-ens')
     setStatusError(null)
     setEnsState({ status: 'idle' })
 
-    const result = await resolveEnsName(ensName).catch(error => {
+    const result = await resolveEnsName(ensName).catch(caughtError => {
       setEnsState({
         error:
-          error instanceof Error ? error.message : 'Unable to resolve ENS name.',
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Unable to resolve ENS name.',
         input: trimmedValue,
         status: 'invalid',
       })
       setVerificationStage('idle')
-
       return null
     })
     if (!result) return
@@ -255,9 +245,11 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
     setVerificationStage('checking-address')
     try {
       await verifyEvmAddressStatus(result.address)
-    } catch (error) {
+    } catch (caughtError) {
       setStatusError(
-        error instanceof Error ? error.message : UNSUPPORTED_EVM_ACCOUNT_MESSAGE,
+        caughtError instanceof Error
+          ? caughtError.message
+          : UNSUPPORTED_EVM_ACCOUNT_MESSAGE,
       )
       setVerificationStage('idle')
       return
@@ -282,7 +274,6 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
 
   const selectHistoryMatch = (match: EvmAccessHistoryMatch): void => {
     if (isLoading) return
-
     setValue(match.value)
   }
 
@@ -446,7 +437,7 @@ export const EvmAccessPanel = ({ access, onAccessChange }: EvmAccessPanelProps) 
                     {fieldError ? (
                       <FieldError>{fieldError}</FieldError>
                     ) : isCurrentEnsResolved ? (
-                      <FieldDescription className="break-all font-mono text-zinc-400">
+                      <FieldDescription className="font-mono break-all text-zinc-400">
                         Resolves to {ensState.address}
                       </FieldDescription>
                     ) : null}

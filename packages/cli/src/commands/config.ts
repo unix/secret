@@ -37,7 +37,6 @@ export class Config {
       printJson(await configs.get(CONFIG_KEYS.ENDPOINTS))
     } catch (error) {
       if (printExpectedError(error)) return
-
       throw error
     }
   }

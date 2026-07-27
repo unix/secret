@@ -1,6 +1,10 @@
 import { open, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
-import { openFileChunk, openFileManifest, openText as openCipherText } from 'secret-cipher'
+import {
+  openFileChunk,
+  openFileManifest,
+  openText as openCipherText,
+} from 'secret-cipher'
 import { Service } from 'func'
 import { CONFIG_KEYS, configs } from '../configs'
 import { ApiClient, type SecretResponse, type TransferProgress } from '../utils/api'
@@ -31,14 +35,53 @@ const percentStatus = (label: string, current: number, total: number): string =>
 
 const transferStatus = (label: string, progress: TransferProgress): string => {
   if (progress.percent === null) return `${label}...`
-
   return `${label} ${Math.round(progress.percent * 100)}%...`
 }
 
 @Service()
 export class RevealService {
+  private static ConcatChunks(chunks: readonly Uint8Array[]): Uint8Array {
+    const length = chunks.reduce((total, chunk) => total + chunk.byteLength, 0)
+    const output = new Uint8Array(length)
+    let offset = 0
+    chunks.forEach(chunk => {
+      output.set(chunk, offset)
+      offset += chunk.byteLength
+    })
+
+    return output
+  }
+
+  private static async AvailablePath(filePath: string): Promise<string> {
+    const directory = dirname(filePath)
+    const extension = extname(filePath)
+    const stem = basename(filePath, extension)
+    let candidate = filePath
+    let index = 1
+
+    while (await RevealService.Exists(candidate)) {
+      candidate = join(directory, `${stem}-${index}${extension}`)
+      index += 1
+    }
+
+    return candidate
+  }
+
+  private static async Exists(filePath: string): Promise<boolean> {
+    try {
+      const file = await open(filePath, 'r')
+      await file.close()
+      return true
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === 'ENOENT') return false
+      }
+
+      throw error
+    }
+  }
   async open(input: string): Promise<RevealResult> {
-    const access = await decodeAccess(input)
+    const access = decodeAccess(input)
     const endpoints = await configs.get(CONFIG_KEYS.ENDPOINTS)
     const api = new ApiClient({ apiOrigin: endpoints.apiOrigin })
     const response = await api.read(access.readId)
@@ -141,51 +184,8 @@ export class RevealService {
         }
 
         await writeFile(outputPath, RevealService.ConcatChunks(decryptedChunks))
-
         return outputPath
       },
-    }
-  }
-
-  private static ConcatChunks(chunks: readonly Uint8Array[]): Uint8Array {
-    const length = chunks.reduce((total, chunk) => total + chunk.byteLength, 0)
-    const output = new Uint8Array(length)
-    let offset = 0
-    chunks.forEach(chunk => {
-      output.set(chunk, offset)
-      offset += chunk.byteLength
-    })
-
-    return output
-  }
-
-  private static async AvailablePath(filePath: string): Promise<string> {
-    const directory = dirname(filePath)
-    const extension = extname(filePath)
-    const stem = basename(filePath, extension)
-    let candidate = filePath
-    let index = 1
-
-    while (await RevealService.Exists(candidate)) {
-      candidate = join(directory, `${stem}-${index}${extension}`)
-      index += 1
-    }
-
-    return candidate
-  }
-
-  private static async Exists(filePath: string): Promise<boolean> {
-    try {
-      const file = await open(filePath, 'r')
-      await file.close()
-
-      return true
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error) {
-        if (error.code === 'ENOENT') return false
-      }
-
-      throw error
     }
   }
 }

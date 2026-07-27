@@ -24,13 +24,11 @@ const normalizedPercent = ({
 }): number | null => {
   if (isFiniteNumber(progress)) return Math.max(0, Math.min(progress, 1))
   if (total && total > 0) return Math.max(0, Math.min(loaded / total, 1))
-
   return null
 }
 
 export const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
-
   const units = ['KB', 'MB', 'GB']
   let size = bytes / 1024
   let unitIndex = 0
@@ -78,6 +76,5 @@ export const transferStatus = ({
   const total = progress.total ? `/${formatBytes(progress.total)}` : ''
   const speed = progress.rate ? ` at ${formatBytes(progress.rate)}/s` : ''
   if (progress.percent === null) return `${verb} ${loaded}${speed}...`
-
   return `${verb} ${Math.round(progress.percent * 100)}% (${loaded}${total})${speed}...`
 }

@@ -1,5 +1,17 @@
 import { CliUserError } from '../utils/expected-error'
 
+const defaultProtocol = (host: string): 'http' | 'https' => {
+  if (
+    host.startsWith('localhost') ||
+    host.startsWith('127.') ||
+    host.startsWith('[::1]')
+  ) {
+    return 'http'
+  }
+
+  return 'https'
+}
+
 export const normalizeOrigin = (host: string): string => {
   const value = host.trim()
   if (!value) throw new CliUserError('Host cannot be empty.')
@@ -15,16 +27,4 @@ export const normalizeOrigin = (host: string): string => {
   }
 
   return url.origin
-}
-
-const defaultProtocol = (host: string): 'http' | 'https' => {
-  if (
-    host.startsWith('localhost') ||
-    host.startsWith('127.') ||
-    host.startsWith('[::1]')
-  ) {
-    return 'http'
-  }
-
-  return 'https'
 }

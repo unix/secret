@@ -274,9 +274,8 @@ const resolveForPreview = async ({
   }
 
   const cached = await findResolution(db, normalized)
-  if (cached && isCachedResultFresh(cached, timestamp)) {
+  if (cached && isCachedResultFresh(cached, timestamp))
     return resultFromRow(cached, true)
-  }
 
   return await refreshEns({
     db,
@@ -321,11 +320,9 @@ const accessPolicy = async ({
 }): Promise<EnsAccessPolicy | 'conflict' | 'invalid'> => {
   const normalized = normalizedEnsName(name)
   if (!normalized) return 'invalid'
-
   const cached = await findResolution(db, normalized)
   if (
-    cached &&
-    cached.status === 'resolved' &&
+    cached?.status === 'resolved' &&
     cached.address &&
     isAccessCacheFresh(cached, timestamp)
   ) {
@@ -334,9 +331,7 @@ const accessPolicy = async ({
       ens: normalized,
     }
   }
-  if (cached && isAccessCacheFresh(cached, timestamp)) {
-    return 'conflict'
-  }
+  if (cached && isAccessCacheFresh(cached, timestamp)) return 'conflict'
 
   try {
     const address = await resolveAndPersistInBackground({

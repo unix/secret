@@ -3,6 +3,20 @@ import { requireEnv } from './env'
 import type { PreflightCheck } from './types'
 import { wranglerJson } from './wrangler'
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === 'object'
+}
+
+const stringValue = (value: unknown, keys: readonly string[]): string | null => {
+  if (!isRecord(value)) return null
+
+  for (const key of keys) {
+    if (typeof value[key] === 'string') return value[key]
+  }
+
+  return null
+}
+
 export const d1Preflight: PreflightCheck = {
   label: 'd1',
   run: async context => {
@@ -29,18 +43,4 @@ export const d1Preflight: PreflightCheck = {
       )
     }
   },
-}
-
-const stringValue = (value: unknown, keys: readonly string[]): string | null => {
-  if (!isRecord(value)) return null
-
-  for (const key of keys) {
-    if (typeof value[key] === 'string') return value[key]
-  }
-
-  return null
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return value !== null && typeof value === 'object'
 }

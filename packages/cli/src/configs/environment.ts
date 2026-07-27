@@ -1,6 +1,5 @@
 export const isLocalRuntime = (): boolean => {
   const entry = process.argv[1] ?? ''
-
   return entry.endsWith('/packages/cli/src/index.ts')
 }
 

@@ -9,12 +9,11 @@
     "dev": "astro dev --port 3000",
     "build": "astro build",
     "release": "pnpm --filter secret-cipher build && pnpm build && wrangler deploy",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "prettier": "prettier --write .",
     "preview": "astro preview",
     "astro": "astro"
   },
-  "prettier": "@unix/prettier",
   "dependencies": {
     "@astrojs/cloudflare": "^13.6.1",
     "@astrojs/react": "^5.0.7",
@@ -42,7 +41,9 @@
     "viem": "^2.52.2"
   },
   "devDependencies": {
+    "@unix/eslint": "^1.3.0",
     "@unix/prettier": "^0.1.0",
+    "eslint": "^10.8.0",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",

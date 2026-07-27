@@ -18,21 +18,16 @@ const safeRequestPath = (url: string): string => {
   const pathname = new URL(url).pathname
   if (pathname === '/api/secrets/text') return pathname
   if (pathname === '/api/secrets/files/init') return pathname
-  if (pathname.startsWith('/api/secrets/files/')) {
+  if (pathname.startsWith('/api/secrets/files/'))
     return '/api/secrets/files/[secretId]/complete'
-  }
-  if (pathname.startsWith('/api/chains/evm/addresses/')) {
+  if (pathname.startsWith('/api/chains/evm/addresses/'))
     return '/api/chains/evm/addresses/[address]/status'
-  }
   if (pathname.startsWith('/api/chains/evm/resolve-ens')) return pathname
-  if (pathname.startsWith('/api/chains/evm/')) {
+  if (pathname.startsWith('/api/chains/evm/'))
     return '/api/chains/evm/[evmId]/[action]'
-  }
-  if (pathname.startsWith('/api/secrets/track/')) {
+  if (pathname.startsWith('/api/secrets/track/'))
     return '/api/secrets/track/[trackId]'
-  }
   if (pathname.startsWith('/api/secrets/')) return '/api/secrets/[readId]'
-
   return pathname
 }
 
@@ -76,9 +71,7 @@ app.onError((error, c) => {
     path: safeRequestPath(c.req.url),
   })
 
-  if (isTransientD1Error(error)) {
+  if (isTransientD1Error(error))
     return c.json({ error: 'Database connection temporarily unavailable.' }, 503)
-  }
-
   return c.json({ error: 'Internal server error.' }, 500)
 })

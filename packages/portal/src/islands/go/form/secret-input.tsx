@@ -38,10 +38,7 @@ export const SecretInput = ({
   }
 
   if (mode === 'file') {
-    if (file) {
-      return <FilePreview file={file} onRemove={() => onFileChange(null)} />
-    }
-
+    if (file) return <FilePreview file={file} onRemove={() => onFileChange(null)} />
     return <FilePlaceholder onFileChange={onFileChange} />
   }
 

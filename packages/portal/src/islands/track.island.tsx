@@ -20,7 +20,6 @@ type TrackSecretIslandProps = {
 
 const dateTime = (timestamp: number | null): string => {
   if (!timestamp) return '-'
-
   return new Date(timestamp).toLocaleString()
 }
 
@@ -28,7 +27,6 @@ const statusLabel = (status: TrackSecretResponse['status']): string => {
   if (status === 'ready') return 'Ready'
   if (status === 'destroyed') return 'Destroyed'
   if (status === 'expired') return 'Expired'
-
   return 'Pending'
 }
 
@@ -46,7 +44,6 @@ const isEvmProtectedLink = (
 ): boolean => {
   if (link?.access === 'evm') return true
   if (!value) return false
-
   return isEvmAccessUrl(value)
 }
 
@@ -115,7 +112,7 @@ const ReadRow = ({
     if (!value) return
 
     try {
-      await navigator.clipboard?.writeText(value)
+      await navigator.clipboard.writeText(value)
     } catch {
       return
     }
@@ -127,7 +124,7 @@ const ReadRow = ({
     <tr className="border-b border-zinc-100 last:border-b-0">
       <td className="px-4 py-3 align-top">
         {value ? (
-          <pre className="max-w-full rounded-md bg-zinc-50 px-2.5 py-2 font-mono text-[11px] leading-5 whitespace-pre-wrap text-zinc-800 break-all [overflow-wrap:anywhere]">
+          <pre className="max-w-full rounded-md bg-zinc-50 px-2.5 py-2 font-mono text-[11px] leading-5 [overflow-wrap:anywhere] break-all whitespace-pre-wrap text-zinc-800">
             <span className="flex min-w-0 items-start gap-1">
               {isEvmProtected ? <EthereumLogoMark /> : null}
               <code className="min-w-0 flex-1">{value}</code>
@@ -205,7 +202,7 @@ const ReadList = ({
           </thead>
           <tbody>
             {reads.map((read, index) => {
-              const link = linksByReadId.get(read.readId) ?? links[index]
+              const link = linksByReadId.get(read.readId) ?? links.at(index)
 
               return (
                 <ReadRow
@@ -248,7 +245,6 @@ export const TrackSecretIsland = ({ trackId }: TrackSecretIslandProps) => {
       try {
         const nextSecret = await trackSecret(trackId)
         if (requestIdRef.current !== requestId) return
-
         setSecret(nextSecret)
         setStatus('')
       } catch (error) {
@@ -272,7 +268,6 @@ export const TrackSecretIsland = ({ trackId }: TrackSecretIslandProps) => {
 
   const refreshSecret = async () => {
     if (refreshingRef.current) return
-
     refreshingRef.current = true
     setRefreshing(true)
     try {
@@ -305,7 +300,7 @@ export const TrackSecretIsland = ({ trackId }: TrackSecretIslandProps) => {
 
   return (
     <AppContent>
-      <div className="grid gap-3 max-md:grid-cols-2 grid-cols-3 w-full">
+      <div className="grid w-full grid-cols-3 gap-3 max-md:grid-cols-2">
         <Metric
           label="Remaining"
           value={`${secret.remainingReads}/${secret.readLimit}`}
@@ -317,7 +312,7 @@ export const TrackSecretIsland = ({ trackId }: TrackSecretIslandProps) => {
         <Metric label="Destroyed" value={dateTime(secret.destroyedAt)} />
       </div>
 
-      <div className="mt-10 border-t border-zinc-100 pt-6 w-full">
+      <div className="mt-10 w-full border-t border-zinc-100 pt-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-sm leading-6 font-medium text-zinc-800">

@@ -9,12 +9,10 @@ import type {
 } from '../types'
 
 const isNodeEnvironment = (): boolean => {
-  const processValue = Reflect.get(globalThis, 'process')
-  if (typeof processValue !== 'object' || processValue === null) return false
-
-  const versions = Reflect.get(processValue, 'versions')
-  if (typeof versions !== 'object' || versions === null) return false
-
+  const processValue: unknown = Reflect.get(globalThis, 'process')
+  if (processValue === null || typeof processValue !== 'object') return false
+  const versions: unknown = Reflect.get(processValue, 'versions')
+  if (versions === null || typeof versions !== 'object') return false
   return typeof Reflect.get(versions, 'node') === 'string'
 }
 
@@ -30,18 +28,10 @@ const loadNodeRuntime = async (): Promise<CipherRuntime | null> => {
 const resolvePreferredRuntime = async (
   preference: RuntimePreference,
 ): Promise<CipherRuntime | null> => {
-  if (preference === RUNTIME_PREFERENCE.WEB) {
-    return createWebRuntime()
-  }
-
-  if (preference === RUNTIME_PREFERENCE.WEB_STANDARDS) {
+  if (preference === RUNTIME_PREFERENCE.WEB) return createWebRuntime()
+  if (preference === RUNTIME_PREFERENCE.WEB_STANDARDS)
     return createWebStandardsRuntime()
-  }
-
-  if (preference === RUNTIME_PREFERENCE.NODE) {
-    return loadNodeRuntime()
-  }
-
+  if (preference === RUNTIME_PREFERENCE.NODE) return loadNodeRuntime()
   return null
 }
 
@@ -58,7 +48,6 @@ const resolveAutoRuntime = async (): Promise<CipherRuntime | null> => {
 
   const standardsRuntime = createWebStandardsRuntime()
   if (standardsRuntime) return standardsRuntime
-
   return null
 }
 

@@ -12,11 +12,8 @@ export class CliUserError extends Error {
 }
 
 export const printExpectedError = (error: unknown): boolean => {
-  if (!(error instanceof CliUserError || error instanceof ApiClientError)) {
+  if (!(error instanceof CliUserError || error instanceof ApiClientError))
     return false
-  }
-
   console.error(errorLine(error.code, error.message))
-
   return true
 }

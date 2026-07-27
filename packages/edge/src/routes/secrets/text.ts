@@ -17,7 +17,6 @@ import { evmAccessPolicy } from './access'
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
-
   const units = ['KB', 'MB', 'GB']
   let size = bytes / 1024
   let unitIndex = 0
@@ -41,9 +40,8 @@ export const storeTextSecret = async (c: AppContext): Promise<Response> => {
   const timestamp = Date.now()
   const expiresInSeconds = ensureExpiresInSeconds(input.expiresInSeconds)
   const reads = ensureReads(input.reads)
-  if (!expiresInSeconds || !reads) {
+  if (!expiresInSeconds || !reads)
     return http.badRequest(c, 'Invalid expiration or read count.')
-  }
   const provider = ethRpcProvider(c.env)
   const accessPolicy = await evmAccessPolicy({
     db: c.env.DB,
@@ -52,22 +50,15 @@ export const storeTextSecret = async (c: AppContext): Promise<Response> => {
     value: input.access,
     waitUntil: task => c.executionCtx.waitUntil(task),
   })
-  if (accessPolicy === 'invalid') {
+  if (accessPolicy === 'invalid')
     return http.badRequest(c, 'Invalid EVM access policy.')
-  }
-  if (accessPolicy === 'conflict') {
+  if (accessPolicy === 'conflict')
     return http.conflict(c, 'ENS name could not be resolved before creating.')
-  }
-  if (accessPolicy === 'unsupported') {
+  if (accessPolicy === 'unsupported')
     return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
-  }
-  if (accessPolicy === 'unavailable') {
+  if (accessPolicy === 'unavailable')
     return http.badGateway(c, 'Ethereum RPC is unavailable.')
-  }
-  if (accessPolicy === 'unsupported-account') {
-    return c.body(null, 400)
-  }
-
+  if (accessPolicy === 'unsupported-account') return c.body(null, 400)
   const cipherBytes = textEncoder.encode(input.cipher).byteLength
   const isMissingCipher = !input.cipher
   const isPlainTextTooLarge = input.plainSize > MAX_TEXT_BYTES

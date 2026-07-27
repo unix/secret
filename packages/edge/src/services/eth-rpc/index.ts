@@ -11,10 +11,8 @@ export const ethRpcProvider = (
 ): EthRpcProvider | null => {
   const alchemyKey = env.ETH_ALCHEMY_API_KEY?.trim()
   if (alchemyKey) return alchemyProvider(alchemyKey)
-
   const infuraKey = env.ETH_INFURA_API_KEY?.trim()
   if (infuraKey) return infuraProvider(infuraKey)
-
   return null
 }
 

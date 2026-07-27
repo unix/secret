@@ -20,13 +20,11 @@ const subtleHmac = async (key: Uint8Array, data: string): Promise<Uint8Array> =>
     ['sign'],
   )
   const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataBuffer)
-
   return new Uint8Array(signature)
 }
 
 const sha256Hex = async (value: string): Promise<string> => {
   const digest = await crypto.subtle.digest('SHA-256', textEncoder.encode(value))
-
   return hex(new Uint8Array(digest))
 }
 
@@ -102,7 +100,6 @@ const presignUrl = async ({
   const serviceKey = await subtleHmac(regionKey, 's3')
   const signingKey = await subtleHmac(serviceKey, 'aws4_request')
   query.set('X-Amz-Signature', hex(await subtleHmac(signingKey, stringToSign)))
-
   return `https://${host}${canonicalUri}?${query.toString()}`
 }
 

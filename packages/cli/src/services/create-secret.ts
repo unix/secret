@@ -47,13 +47,11 @@ const percentStatus = (label: string, current: number, total: number): string =>
 
 const transferStatus = (label: string, progress: TransferProgress): string => {
   if (progress.percent === null) return `${label}...`
-
   return `${label} ${Math.round(progress.percent * 100)}%...`
 }
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
-
   const units = ['KB', 'MB', 'GB']
   let size = bytes / 1024
   let unitIndex = 0
@@ -84,7 +82,6 @@ export class CreateSecretService {
     try {
       const stats = await stat(filePath)
       if (stats.isFile()) return stats
-
       throw new CliUserError(`${filePath} is not a file.`)
     } catch (error) {
       if (error instanceof CliUserError) throw error
@@ -163,7 +160,7 @@ export class CreateSecretService {
       expiresInSeconds,
       reads,
     })
-    const links = await textLinks(created.readIds, sealed.secret, portalOrigin)
+    const links = textLinks(created.readIds, sealed.secret, portalOrigin)
     const createdTrackUrl = trackUrl(created.trackId, portalOrigin)
     await saveTrack({
       kind: 'text',
@@ -284,7 +281,7 @@ export class CreateSecretService {
       secretId: init.secretId,
       uploadToken: init.uploadToken,
     })
-    const links = await fileLinks(complete.readIds, secret, portalOrigin)
+    const links = fileLinks(complete.readIds, secret, portalOrigin)
     const completeTrackUrl = trackUrl(complete.trackId, portalOrigin)
     await saveTrack({
       kind: 'file',

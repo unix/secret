@@ -17,7 +17,6 @@ import { evmAccessPolicy } from './access'
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
-
   const units = ['KB', 'MB', 'GB']
   let size = bytes / 1024
   let unitIndex = 0
@@ -53,9 +52,8 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
   const timestamp = Date.now()
   const expiresInSeconds = ensureExpiresInSeconds(input.expiresInSeconds)
   const reads = ensureReads(input.reads)
-  if (!expiresInSeconds || !reads) {
+  if (!expiresInSeconds || !reads)
     return http.badRequest(c, 'Invalid expiration or read count.')
-  }
   const provider = ethRpcProvider(c.env)
   const accessPolicy = await evmAccessPolicy({
     db: c.env.DB,
@@ -64,22 +62,15 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
     value: input.access,
     waitUntil: task => c.executionCtx.waitUntil(task),
   })
-  if (accessPolicy === 'invalid') {
+  if (accessPolicy === 'invalid')
     return http.badRequest(c, 'Invalid EVM access policy.')
-  }
-  if (accessPolicy === 'conflict') {
+  if (accessPolicy === 'conflict')
     return http.conflict(c, 'ENS name could not be resolved before creating.')
-  }
-  if (accessPolicy === 'unsupported') {
+  if (accessPolicy === 'unsupported')
     return http.notImplemented(c, 'Ethereum RPC provider is not configured.')
-  }
-  if (accessPolicy === 'unavailable') {
+  if (accessPolicy === 'unavailable')
     return http.badGateway(c, 'Ethereum RPC is unavailable.')
-  }
-  if (accessPolicy === 'unsupported-account') {
-    return c.body(null, 400)
-  }
-
+  if (accessPolicy === 'unsupported-account') return c.body(null, 400)
   const isMissingManifest = !input.encryptedManifest
   const isMissingManifestIv = !input.manifestIv
   const isMissingSalt = !input.salt
@@ -103,12 +94,9 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
     isMissingSalt ||
     hasInvalidSize ||
     hasInvalidChunks
-  if (hasInvalidFileMetadata) {
-    return http.badRequest(c, 'Invalid file metadata.')
-  }
-  if (input.plainSize > MAX_FILE_BYTES) {
+  if (hasInvalidFileMetadata) return http.badRequest(c, 'Invalid file metadata.')
+  if (input.plainSize > MAX_FILE_BYTES)
     return http.badRequest(c, `Files are limited to ${formatBytes(MAX_FILE_BYTES)}.`)
-  }
   if (input.encryptedSize > MAX_FILE_CIPHER_BYTES) {
     return http.badRequest(
       c,
@@ -163,9 +151,7 @@ export const initFileSecret = async (c: AppContext): Promise<Response> => {
 export const completeFileSecret = async (c: AppContext): Promise<Response> => {
   const input = await c.req.json<CompleteFileInput>()
   const secretId = c.req.param('secretId')
-  if (!secretId) {
-    return http.notFound(c, 'Upload session not found.')
-  }
+  if (!secretId) return http.notFound(c, 'Upload session not found.')
 
   const secret = await c.env.DB.prepare(FIND_PENDING_FILE_SECRET_QUERY)
     .bind(secretId, input.uploadToken)
@@ -175,15 +161,9 @@ export const completeFileSecret = async (c: AppContext): Promise<Response> => {
       expires_at: number
       read_limit: number
     }>()
-  if (!secret) {
-    return http.notFound(c, 'Upload session not found.')
-  }
-
+  if (!secret) return http.notFound(c, 'Upload session not found.')
   const object = await c.env.FILES.head(secret.r2_key)
-  if (!object) {
-    return http.conflict(c, 'Uploaded file object is not available yet.')
-  }
-
+  if (!object) return http.conflict(c, 'Uploaded file object is not available yet.')
   const readIds = createReadIds(secret.read_limit)
   const timestamp = Date.now()
   const trackId = randomId(TRACK_ID_BYTES)

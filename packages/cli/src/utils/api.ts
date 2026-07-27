@@ -70,9 +70,27 @@ type UploadRequestInit = RequestInit & {
   readonly duplex: 'half'
 }
 
+type ByteStreamReadResult =
+  | {
+      readonly done: false
+      readonly value: Uint8Array
+    }
+  | {
+      readonly done: true
+      readonly value?: undefined
+    }
+
 const TRANSFER_CHUNK_BYTES = 64 * 1024
 const RATE_LIMIT_MESSAGE =
   'Requests are coming in too quickly. Please wait a minute and try again.'
+
+const isByteStreamReadResult = (value: unknown): value is ByteStreamReadResult => {
+  if (typeof value !== 'object' || value === null || !('done' in value)) return false
+  if (value.done === true) return true
+  return (
+    value.done === false && 'value' in value && value.value instanceof Uint8Array
+  )
+}
 
 export class ApiClientError extends Error {
   readonly code = 'API-REQUEST-FAILED'
@@ -86,6 +104,147 @@ export class ApiClientError extends Error {
 }
 
 export class ApiClient {
+  private static async ErrorMessage(
+    response: Response,
+    fallback: string,
+  ): Promise<string> {
+    if (response.status === 429) return RATE_LIMIT_MESSAGE
+    const text = await response.text()
+    if (!text) return fallback
+
+    try {
+      const parsed: unknown = JSON.parse(text)
+      if (ApiClient.IsApiErrorBody(parsed) && typeof parsed.error === 'string')
+        return parsed.error
+    } catch {
+      return text
+    }
+
+    return text
+  }
+
+  private static async Fetch(
+    url: string,
+    init: RequestInit | undefined,
+    fallback: string,
+  ): Promise<Response> {
+    try {
+      return await fetch(url, init)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const cause = error instanceof Error ? error.cause : undefined
+      const causeMessage =
+        cause instanceof Error && cause.message !== message
+          ? ` ${cause.message}`
+          : ''
+
+      throw new Error(
+        `${fallback} ${message}${causeMessage} Tried ${url}. Run secret config --api <origin> to use a custom API host.`,
+        { cause: error },
+      )
+    }
+  }
+
+  private static UploadBody(
+    body: Uint8Array,
+    onProgress: ProgressHandler | undefined,
+  ): ReadableStream<Uint8Array> {
+    let offset = 0
+    const total = body.byteLength
+    onProgress?.(ApiClient.Progress(0, total))
+
+    return new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (offset >= total) {
+          controller.close()
+          return
+        }
+
+        const end = Math.min(offset + TRANSFER_CHUNK_BYTES, total)
+        controller.enqueue(body.slice(offset, end))
+        offset = end
+        onProgress?.(ApiClient.Progress(offset, total))
+      },
+    })
+  }
+
+  private static async DownloadBody(
+    response: Response,
+    onProgress: ProgressHandler | undefined,
+    expectedBytes: number | undefined,
+  ): Promise<Uint8Array> {
+    const headerBytes = Number(response.headers.get('content-length'))
+    const total = ApiClient.TotalBytes(expectedBytes, headerBytes)
+
+    if (!response.body) {
+      const body = new Uint8Array(await response.arrayBuffer())
+      onProgress?.(ApiClient.Progress(body.byteLength, total))
+      return body
+    }
+
+    const reader = response.body.getReader()
+    const chunks: Uint8Array[] = []
+    let loaded = 0
+    onProgress?.(ApiClient.Progress(loaded, total))
+
+    for (;;) {
+      const result: unknown = await reader.read()
+      if (!isByteStreamReadResult(result)) {
+        throw new Error('File download returned an invalid stream chunk.')
+      }
+      if (result.done) break
+      chunks.push(result.value)
+      loaded += result.value.byteLength
+      onProgress?.(ApiClient.Progress(loaded, total))
+    }
+
+    return ApiClient.ConcatChunks(chunks, loaded)
+  }
+
+  private static Progress(loaded: number, total: number | null): TransferProgress {
+    return {
+      loaded,
+      percent: total && total > 0 ? Math.max(0, Math.min(loaded / total, 1)) : null,
+      total,
+    }
+  }
+
+  private static TotalBytes(
+    expectedBytes: number | undefined,
+    headerBytes: number,
+  ): number | null {
+    if (typeof expectedBytes === 'number' && Number.isFinite(expectedBytes)) {
+      if (expectedBytes > 0) return expectedBytes
+    }
+
+    if (Number.isFinite(headerBytes) && headerBytes > 0) return headerBytes
+    return null
+  }
+
+  private static ConcatChunks(
+    chunks: readonly Uint8Array[],
+    length: number,
+  ): Uint8Array {
+    const output = new Uint8Array(length)
+    let offset = 0
+    chunks.forEach(chunk => {
+      output.set(chunk, offset)
+      offset += chunk.byteLength
+    })
+
+    return output
+  }
+
+  private static async Json<T>(response: Response): Promise<T> {
+    // The caller supplies the API response type; runtime error payloads are handled separately.
+    const parsed: unknown = JSON.parse(await response.text())
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return parsed as T
+  }
+
+  private static IsApiErrorBody(value: unknown): value is ApiErrorBody {
+    return typeof value === 'object' && value !== null && 'error' in value
+  }
   private readonly apiOrigin: string
 
   constructor({ apiOrigin }: ApiClientOptions) {
@@ -190,154 +349,13 @@ export class ApiClient {
       undefined,
       'Unable to download encrypted file.',
     )
-    if (response.ok) {
+    if (response.ok)
       return ApiClient.DownloadBody(response, onProgress, expectedBytes)
-    }
 
     throw new ApiClientError(
       await ApiClient.ErrorMessage(response, 'Unable to download encrypted file.'),
       response.status,
     )
-  }
-
-  private static async ErrorMessage(
-    response: Response,
-    fallback: string,
-  ): Promise<string> {
-    if (response.status === 429) return RATE_LIMIT_MESSAGE
-
-    const text = await response.text()
-    if (!text) return fallback
-
-    try {
-      const parsed: unknown = JSON.parse(text)
-      if (ApiClient.IsApiErrorBody(parsed) && typeof parsed.error === 'string') {
-        return parsed.error
-      }
-    } catch {
-      return text
-    }
-
-    return text
-  }
-
-  private static async Fetch(
-    url: string,
-    init: RequestInit | undefined,
-    fallback: string,
-  ): Promise<Response> {
-    try {
-      return await fetch(url, init)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      const cause = error instanceof Error ? error.cause : undefined
-      const causeMessage =
-        cause instanceof Error && cause.message !== message
-          ? ` ${cause.message}`
-          : ''
-
-      throw new Error(
-        `${fallback} ${message}${causeMessage} Tried ${url}. Run secret config --api <origin> to use a custom API host.`,
-      )
-    }
-  }
-
-  private static UploadBody(
-    body: Uint8Array,
-    onProgress: ProgressHandler | undefined,
-  ): ReadableStream<Uint8Array> {
-    let offset = 0
-    const total = body.byteLength
-    onProgress?.(ApiClient.Progress(0, total))
-
-    return new ReadableStream<Uint8Array>({
-      pull(controller) {
-        if (offset >= total) {
-          controller.close()
-          return
-        }
-
-        const end = Math.min(offset + TRANSFER_CHUNK_BYTES, total)
-        controller.enqueue(body.slice(offset, end))
-        offset = end
-        onProgress?.(ApiClient.Progress(offset, total))
-      },
-    })
-  }
-
-  private static async DownloadBody(
-    response: Response,
-    onProgress: ProgressHandler | undefined,
-    expectedBytes: number | undefined,
-  ): Promise<Uint8Array> {
-    const headerBytes = Number(response.headers.get('content-length'))
-    const total = ApiClient.TotalBytes(expectedBytes, headerBytes)
-
-    if (!response.body) {
-      const body = new Uint8Array(await response.arrayBuffer())
-      onProgress?.(ApiClient.Progress(body.byteLength, total))
-
-      return body
-    }
-
-    const reader = response.body.getReader()
-    const chunks: Uint8Array[] = []
-    let loaded = 0
-    onProgress?.(ApiClient.Progress(loaded, total))
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      chunks.push(value)
-      loaded += value.byteLength
-      onProgress?.(ApiClient.Progress(loaded, total))
-    }
-
-    return ApiClient.ConcatChunks(chunks, loaded)
-  }
-
-  private static Progress(loaded: number, total: number | null): TransferProgress {
-    return {
-      loaded,
-      percent: total && total > 0 ? Math.max(0, Math.min(loaded / total, 1)) : null,
-      total,
-    }
-  }
-
-  private static TotalBytes(
-    expectedBytes: number | undefined,
-    headerBytes: number,
-  ): number | null {
-    if (typeof expectedBytes === 'number' && Number.isFinite(expectedBytes)) {
-      if (expectedBytes > 0) return expectedBytes
-    }
-
-    if (Number.isFinite(headerBytes) && headerBytes > 0) return headerBytes
-
-    return null
-  }
-
-  private static ConcatChunks(
-    chunks: readonly Uint8Array[],
-    length: number,
-  ): Uint8Array {
-    const output = new Uint8Array(length)
-    let offset = 0
-    chunks.forEach(chunk => {
-      output.set(chunk, offset)
-      offset += chunk.byteLength
-    })
-
-    return output
-  }
-
-  private static async Json<T>(response: Response): Promise<T> {
-    return JSON.parse(await response.text())
-  }
-
-  private static IsApiErrorBody(value: unknown): value is ApiErrorBody {
-    return typeof value === 'object' && value !== null && 'error' in value
   }
 
   private async requestJson<T>(
@@ -372,7 +390,6 @@ export class ApiClient {
 
   private apiUrl(path: string, apiPrefix = true): string {
     const prefix = apiPrefix ? '/api' : ''
-
     return `${this.apiOrigin}${prefix}${path}`
   }
 }

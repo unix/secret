@@ -95,7 +95,6 @@ export const expirationBucket = (seconds: number): string => {
   if (seconds <= 1800) return 'lte_30m'
   if (seconds <= 3600) return 'lte_1h'
   if (seconds <= 86400) return 'lte_24h'
-
   return 'gt_24h'
 }
 
@@ -106,7 +105,6 @@ export const sizeBucket = (bytes: number): string => {
   if (bytes <= 100 * 1024) return 'lte_100kb'
   if (bytes <= 1024 * 1024) return 'lte_1mb'
   if (bytes <= 10 * 1024 * 1024) return 'lte_10mb'
-
   return 'gt_10mb'
 }
 
@@ -114,6 +112,5 @@ export const trackEvent = (event: AnalyticsEvent): void => {
   if (!hasAnalytics()) return
   if (typeof window === 'undefined') return
   if (!window.gtag) return
-
   window.gtag('event', event.name, event.params)
 }

@@ -62,6 +62,40 @@ const SelectTrigger = ({
   )
 }
 
+const SelectScrollUpButton = ({
+  className,
+  ...props
+}: ComponentProps<typeof SelectPrimitive.ScrollUpArrow>) => {
+  return (
+    <SelectPrimitive.ScrollUpArrow
+      data-slot="select-scroll-up-button"
+      className={cn(
+        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
+        className,
+      )}
+      {...props}>
+      <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={2} />
+    </SelectPrimitive.ScrollUpArrow>
+  )
+}
+
+const SelectScrollDownButton = ({
+  className,
+  ...props
+}: ComponentProps<typeof SelectPrimitive.ScrollDownArrow>) => {
+  return (
+    <SelectPrimitive.ScrollDownArrow
+      data-slot="select-scroll-down-button"
+      className={cn(
+        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
+        className,
+      )}
+      {...props}>
+      <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} />
+    </SelectPrimitive.ScrollDownArrow>
+  )
+}
+
 const SelectContent = ({
   className,
   children,
@@ -152,40 +186,6 @@ const SelectSeparator = ({
       className={cn('pointer-events-none -mx-1 my-1 h-px bg-border/50', className)}
       {...props}
     />
-  )
-}
-
-const SelectScrollUpButton = ({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollUpArrow>) => {
-  return (
-    <SelectPrimitive.ScrollUpArrow
-      data-slot="select-scroll-up-button"
-      className={cn(
-        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
-        className,
-      )}
-      {...props}>
-      <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={2} />
-    </SelectPrimitive.ScrollUpArrow>
-  )
-}
-
-const SelectScrollDownButton = ({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollDownArrow>) => {
-  return (
-    <SelectPrimitive.ScrollDownArrow
-      data-slot="select-scroll-down-button"
-      className={cn(
-        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
-        className,
-      )}
-      {...props}>
-      <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} />
-    </SelectPrimitive.ScrollDownArrow>
   )
 }
 

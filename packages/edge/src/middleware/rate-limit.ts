@@ -8,10 +8,8 @@ const RETRY_AFTER_SECONDS = '60'
 const clientKey = (headers: Headers): string => {
   const cfConnectingIp = headers.get('cf-connecting-ip')?.trim()
   if (cfConnectingIp) return cfConnectingIp
-
   const forwardedFor = headers.get('x-forwarded-for')?.split(',')[0]?.trim()
   if (forwardedFor) return forwardedFor
-
   return 'unknown'
 }
 
