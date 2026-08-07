@@ -9,6 +9,7 @@ import { noImageEndpoint } from 'astro-no-image-endpoint/cloudflare'
 
 // https://astro.build/config
 export default defineConfig({
+  compressHTML: true,
   trailingSlash: 'never',
 
   build: {
@@ -23,11 +24,7 @@ export default defineConfig({
     imageService: 'passthrough',
   }),
 
-  session: {
-    driver: {
-      entrypoint: 'unstorage/drivers/null',
-    },
-  },
+  session: false,
 
   vite: {
     ssr: {
