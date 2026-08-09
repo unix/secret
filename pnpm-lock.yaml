@@ -124,6 +124,9 @@ importers:
       astro-no-image-endpoint:
         specifier: ^0.1.0
         version: 0.1.0(astro@7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0))
+      astro-vite-cache-isolation:
+        specifier: ^0.1.0
+        version: 0.1.0(astro@7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0))
       axios:
         specifier: ^1.17.0
         version: 1.17.0
@@ -2002,6 +2005,12 @@ packages:
 
   astro-no-image-endpoint@0.1.0:
     resolution: {integrity: sha512-RFcZPwLHsYuPJFd1fwo509AekvRXVwqDCyjIQCRNF1zVp6KP9be0m8X7LgByGZwGtHBPuc7bzBpWIPwqf+poQw==}
+    engines: {node: '>=20.11.0'}
+    peerDependencies:
+      astro: '>=5.0.0 <8.0.0'
+
+  astro-vite-cache-isolation@0.1.0:
+    resolution: {integrity: sha512-nRAHgF0+7VTmZm7DolRPZTjcmiIt7yZY3iOAvp+6DuBPathj3KxCqCnkKzsAgsqiT1L0QWBxVCZaw/l1O6x5dw==}
     engines: {node: '>=20.11.0'}
     peerDependencies:
       astro: '>=5.0.0 <8.0.0'
@@ -6004,6 +6013,10 @@ snapshots:
       tslib: 2.8.1
 
   astro-no-image-endpoint@0.1.0(astro@7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0)):
+    dependencies:
+      astro: 7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0)
+
+  astro-vite-cache-isolation@0.1.0(astro@7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0)):
     dependencies:
       astro: 7.2.0(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.4)(jiti@2.7.0)
 

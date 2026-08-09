@@ -13,3 +13,4 @@ minimumReleaseAgeExclude:
   - '@astrojs/cloudflare@14.2.0'
   - astro@7.2.0
   - vite@8.2.1
+  - astro-vite-cache-isolation@0.1.0

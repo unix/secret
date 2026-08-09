@@ -28,6 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "astro": "^7.2.0",
     "astro-no-image-endpoint": "^0.1.0",
+    "astro-vite-cache-isolation": "^0.1.0",
     "axios": "^1.17.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

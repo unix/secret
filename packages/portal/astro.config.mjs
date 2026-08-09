@@ -6,6 +6,7 @@ import { defineConfig } from 'astro/config'
 import cloudflare from '@astrojs/cloudflare'
 import react from '@astrojs/react'
 import { noImageEndpoint } from 'astro-no-image-endpoint/cloudflare'
+import viteCacheIsolation from 'astro-vite-cache-isolation'
 
 // https://astro.build/config
 export default defineConfig({
@@ -46,5 +47,5 @@ export default defineConfig({
     },
   },
 
-  integrations: [noImageEndpoint(), react()],
+  integrations: [noImageEndpoint(), react(), viteCacheIsolation()],
 })
